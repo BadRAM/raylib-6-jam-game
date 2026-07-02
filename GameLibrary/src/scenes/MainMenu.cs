@@ -34,7 +34,6 @@ public class MainMenu : Scene
         
         if ((Time.Scaled/2) % 1 < 0.5f) {ImGui.DrawTextRadial(0, -300, "Click me for more tunes!");}
         ImGui.DrawTextRadial(0, 300, $"Now Playing: {_nowPlaying}");
-        ImGui.DrawText($"Now Playing: {_nowPlaying}", 360, 360);
         
         if (Raylib.IsMouseButtonPressed(MouseButton.Left))
         {
