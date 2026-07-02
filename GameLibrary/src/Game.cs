@@ -17,7 +17,7 @@ public static class Game
 
     public static void Load()
     {
-        Raylib.SetConfigFlags(ConfigFlags.TransparentWindow | ConfigFlags.UndecoratedWindow);
+        Raylib.SetConfigFlags(ConfigFlags.TransparentWindow | ConfigFlags.UndecoratedWindow | ConfigFlags.Msaa4xHint);
         Raylib.InitWindow(720, 720, "Cool Game :)");
         Raylib.SetTargetFPS(Time.FrameRate);
         Raylib.InitAudioDevice();
