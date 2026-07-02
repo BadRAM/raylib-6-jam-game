@@ -14,7 +14,7 @@ namespace RaylibWasm
             Game.IsWeb = true;
             Game.Dir = "/resource/";
             
-            Game.Load(3);
+            Game.Load();
         }
 
         /// <summary>

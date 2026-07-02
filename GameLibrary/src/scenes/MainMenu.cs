@@ -5,9 +5,9 @@ namespace GameLibrary;
 
 public class MainMenu : Scene
 {
-    private Music _menuMusic = Resources.Musics["menu_theme"];
-    private Pingas _pingas;
-
+    private Music _menuMusic = Resources.Musics["null_function"];
+    private int _musicSelected = 0;
+    
     private List<Font> _testFonts = new List<Font>();
     
     public MainMenu()
@@ -18,26 +18,37 @@ public class MainMenu : Scene
     
     public override void Update()
     {
-        if (_pingas?.Update() ?? false) _pingas = null;
+        Raylib.ClearBackground(Color.Blank);
+        
+        Raylib.DrawCircle(360, 360, 360, new Color(10, 15, 50));
 
-        Raylib.UpdateMusicStream(_menuMusic);
+        Camera2D spin = new Camera2D();
+        spin.Target = new Vector2(360, 360);
+        spin.Offset = spin.Target;
+        spin.Rotation = Time.Scaled * 60;
+        spin.Zoom = 1;
+        Game.SetCamera(spin);
+        Raylib.DrawTexture(Resources.Sprites["logo"], 180, 180, Color.White);
+        Game.SetCamera();
         
-        Raylib.ClearBackground(Color.Black);
+        // if ((Time.Scaled/2) % 1 < 0.5f) {ImGui.DrawText("Press '1' to start", 300, 680, 20);}
         
-        Raylib.DrawTexture(Resources.Sprites["titlebg"], 0, 0, Color.White);
-        Raylib.DrawTexture(Resources.Sprites["titletext"], 88, 62 + (int)(Math.Sin(Time.Scaled) * 4), Color.White);
-        
-        if ((Time.Scaled/2) % 1 < 0.5f) {ImGui.DrawText("Press '1' to start", 95, 220, 10);}
-        
-        if (Raylib.IsKeyPressed(KeyboardKey.One))
+        if (Raylib.IsMouseButtonPressed(MouseButton.Left))
         {
-            Game.ActiveScene = new IntroCutscene();
+            Raylib.PlaySound(Resources.Sounds["metronome"]);
+            _musicSelected++;
+            _musicSelected %= Resources.Musics.Count;
+            Raylib.StopMusicStream(_menuMusic);
+            _menuMusic = Resources.Musics.ToList()[_musicSelected].Value;
+            Raylib.PlayMusicStream(_menuMusic);
+            Raylib.SetMusicVolume(_menuMusic, 0);
+            Raylib.UpdateMusicStream(_menuMusic);
+            Raylib.SetMusicVolume(_menuMusic, 1);
         }
-
-        if (Raylib.IsKeyPressed(KeyboardKey.P))
+        else
         {
-            _pingas = Assets.Pingas[Random.Shared.Next(Assets.Pingas.Count)];
-            _pingas.Start();
+            Raylib.UpdateMusicStream(_menuMusic);
         }
+        
     }
 }

@@ -11,14 +11,14 @@ public static class Game
     public static Queue<Action> LateActions = new Queue<Action>(); // LateActions are dequeued and invoked after everything else has updated.
     public static Scene ActiveScene;
 
-    // Target Resolution: 320x240, 2X: 640x480, 3X: 960x720, 4x 1280x960
-    private static Camera2D _defaultCamera = new Camera2D(new Vector2(0, 0), Vector2.Zero, 0, 4);
+    // Target Resolution: 720x720
+    private static Camera2D _defaultCamera = new Camera2D(new Vector2(0, 0), Vector2.Zero, 0, 1);
     private static Camera2D _activeCamera = _defaultCamera;
 
-    public static void Load(int scaleFactor)
+    public static void Load()
     {
-        _defaultCamera.Zoom = scaleFactor;
-        Raylib.InitWindow(320 * scaleFactor, 240 * scaleFactor, "Disaster Aboard EFF Mill Bay");
+        Raylib.SetConfigFlags(ConfigFlags.TransparentWindow | ConfigFlags.UndecoratedWindow);
+        Raylib.InitWindow(720, 720, "Cool Game :)");
         Raylib.SetTargetFPS(Time.FrameRate);
         Raylib.InitAudioDevice();
         Raylib.SetExitKey(KeyboardKey.Null);
@@ -41,7 +41,8 @@ public static class Game
         
         Raylib.EndMode2D();
         // ImGui.DrawText("FPS: " + Raylib.GetFPS(), 0, 0);
-        _activeCamera = new Camera2D();
+        _activeCamera = _defaultCamera;
+        // Raylib.DrawTexture(Resources.Sprites["mask"], 0, 0, new Color(12, 12, 12));
         Raylib.EndDrawing();
     }
     

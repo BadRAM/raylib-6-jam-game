@@ -12,9 +12,9 @@ public static class ImGui
 
     static ImGui()
     {
-        _buttonPress = Resources.Sounds["button_press"];
-        _buttonRelease = Resources.Sounds["button_release"];
-        _defaultFont = Resources.Fonts["arcadepix"];
+        _buttonPress = Resources.Sounds["metronome"];
+        _buttonRelease = Resources.Sounds["metronome"];
+        _defaultFont = Resources.Fonts["conthrax"];
     }
 
     public static void DrawText(string text, Vector2 position, int size = 20)
@@ -25,6 +25,11 @@ public static class ImGui
     public static void DrawText(string text, int x, int y, int size = 20)
     {
         DrawText(text, new Vector2(x, y), size);
+    }
+
+    public static void DrawTextRadial(float angle, float radius, string text)
+    {
+        
     }
     
     public static bool Button(string label, int x, int y)
