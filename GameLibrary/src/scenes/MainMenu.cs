@@ -7,6 +7,7 @@ public class MainMenu : Scene
 {
     private Music _menuMusic = Resources.Musics["null_function"];
     private int _musicSelected = 0;
+    private string _nowPlaying = "null_function";
     
     private List<Font> _testFonts = new List<Font>();
     
@@ -31,7 +32,9 @@ public class MainMenu : Scene
         Raylib.DrawTexture(Resources.Sprites["logo"], 180, 180, Color.White);
         Game.SetCamera();
         
-        // if ((Time.Scaled/2) % 1 < 0.5f) {ImGui.DrawText("Press '1' to start", 300, 680, 20);}
+        if ((Time.Scaled/2) % 1 < 0.5f) {ImGui.DrawTextRadial(0, -300, "Click me for more tunes!");}
+        ImGui.DrawTextRadial(0, 300, $"Now Playing: {_nowPlaying}");
+        ImGui.DrawText($"Now Playing: {_nowPlaying}", 360, 360);
         
         if (Raylib.IsMouseButtonPressed(MouseButton.Left))
         {
@@ -39,7 +42,9 @@ public class MainMenu : Scene
             _musicSelected++;
             _musicSelected %= Resources.Musics.Count;
             Raylib.StopMusicStream(_menuMusic);
-            _menuMusic = Resources.Musics.ToList()[_musicSelected].Value;
+            var musics = Resources.Musics.ToList();
+            _menuMusic = musics[_musicSelected].Value;
+            _nowPlaying = musics[_musicSelected].Key;
             Raylib.PlayMusicStream(_menuMusic);
             Raylib.SetMusicVolume(_menuMusic, 0);
             Raylib.UpdateMusicStream(_menuMusic);
