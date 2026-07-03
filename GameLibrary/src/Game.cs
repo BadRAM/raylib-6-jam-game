@@ -10,20 +10,31 @@ public static class Game
     public static string Dir = "";
     public static Queue<Action> LateActions = new Queue<Action>(); // LateActions are dequeued and invoked after everything else has updated.
     public static Scene ActiveScene;
+    public static bool HoverInteractable;
 
     // Target Resolution: 720x720
     private static Camera2D _defaultCamera = new Camera2D(new Vector2(0, 0), Vector2.Zero, 0, 1);
     private static Camera2D _activeCamera = _defaultCamera;
+    private static RenderTexture2D _renderTexture;
+    private static Shader _screenShader;
+    private static int _screenShaderMaskLocation;
+
+    private static ConfigFlags _defaultFlags = ConfigFlags.TransparentWindow | ConfigFlags.UndecoratedWindow | ConfigFlags.Msaa4xHint;
+    private static Vector2 _lastWindowDelta;
+    
 
     public static void Load()
     {
-        Raylib.SetConfigFlags(ConfigFlags.TransparentWindow | ConfigFlags.UndecoratedWindow | ConfigFlags.Msaa4xHint);
+        Raylib.SetConfigFlags(_defaultFlags);
         Raylib.InitWindow(720, 720, "Cool Game :)");
         Raylib.SetTargetFPS(Time.FrameRate);
         Raylib.InitAudioDevice();
         Raylib.SetExitKey(KeyboardKey.Null);
+        _renderTexture = Raylib.LoadRenderTexture(720, 720);
         
         Resources.Load();
+        _screenShader = Resources.Shaders["screen_fragment"];
+        _screenShaderMaskLocation = Raylib.GetShaderLocation(_screenShader, "mask");
         
         ActiveScene = new MainMenu();
     }
@@ -31,8 +42,25 @@ public static class Game
     public static void Update()
     {
         Time.UpdateTime();
+
+        HoverInteractable = false;
+        if (!Raylib.CheckCollisionPointCircle(Raylib.GetMousePosition(), new Vector2(360, 360), 360))
+        {
+            // :'(
+            // Raylib.SetWindowState(ConfigFlags.MousePassthroughWindow);
+        }
+        else
+        {
+            if (Raylib.IsMouseButtonDown(MouseButton.Left))
+            {
+                _lastWindowDelta = Raylib.GetMouseDelta() + _lastWindowDelta;
+                Vector2 winPos = Raylib.GetWindowPosition() + _lastWindowDelta;
+                Raylib.SetWindowPosition((int)winPos.X, (int)winPos.Y);
+            }
+        }
         
         Raylib.BeginDrawing();
+        Raylib.BeginTextureMode(_renderTexture);
         SetCamera();
         
         ActiveScene.Update();
@@ -40,10 +68,48 @@ public static class Game
         while (LateActions.Count > 0) LateActions.Dequeue().Invoke();
         
         Raylib.EndMode2D();
-        // ImGui.DrawText("FPS: " + Raylib.GetFPS(), 0, 0);
+        Raylib.EndTextureMode();
         _activeCamera = _defaultCamera;
-        // Raylib.DrawTexture(Resources.Sprites["mask"], 0, 0, new Color(12, 12, 12));
+        
+        Raylib.BeginShaderMode(_screenShader);
+        Raylib.SetShaderValueTexture(_screenShader, _screenShaderMaskLocation, Resources.Sprites["screen_mask"]);
+        Raylib.DrawTextureRec(_renderTexture.Texture, new Rectangle(0, 0, 720, -720), Vector2.Zero, Color.White);
+        Raylib.EndShaderMode();
+        
+        // DrawRing(Raylib.GetMousePosition().Y, Raylib.GetMousePosition().X / 720f);
+        DrawRing(Time.Scaled * 2, MathF.Sin(Time.Scaled / 2f) / 2f + 0.5f);
+
+        Mask();
+        
         Raylib.EndDrawing();
+        
+        Raylib.SetMouseCursor(HoverInteractable ? MouseCursor.PointingHand : MouseCursor.Default);
+    }
+    
+    // angle is 0-360, tilt is 0-1
+    private static void DrawRing(float angle, float tilt)
+    {
+        int frame = (int)MathF.Floor((tilt % 1) * 10);
+        float subframe = ((tilt % 1) * 10) % 1;
+        Camera2D spin = new Camera2D();
+        spin.Target = new Vector2(360, 360);
+        spin.Offset = spin.Target;
+        spin.Rotation = angle;
+        spin.Zoom = 1;
+        Game.SetCamera(spin);
+        Raylib.DrawTexture(Resources.Sprites[$"ring{frame}"], 0, 0, Color.White);
+        Raylib.DrawTexture(Resources.Sprites[$"ring{Math.Min(frame + 1, 9)}"], 0, 0, new Color(255, 255, 255, (int)(255 * subframe)));
+        Game.SetCamera();
+        
+        // ImGui.DrawTextRadial(0, -240, $"F:{frame} S:{subframe:N2} A:{angle:N0}");
+    }
+
+    private static void Mask()
+    {
+        Raylib.BeginBlendMode(BlendMode.CustomSeparate);
+        Rlgl.SetBlendFactorsSeparate(Rlgl.ZERO, Rlgl.ONE, Rlgl.ONE, Rlgl.ZERO, Rlgl.FUNC_ADD, Rlgl.FUNC_ADD);
+        Raylib.DrawTexture(Resources.Sprites["mask"], 0, 0, Color.White);
+        Raylib.EndBlendMode();
     }
     
     public static void SetCamera(Camera2D? camera = null)

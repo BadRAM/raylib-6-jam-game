@@ -8,6 +8,7 @@ public static class Resources
     public static Dictionary<string, Sound> Sounds = new Dictionary<string, Sound>();
     public static Dictionary<string, Music> Musics = new Dictionary<string, Music>();
     public static Dictionary<string, Font> Fonts = new Dictionary<string, Font>();
+    public static Dictionary<string, Shader> Shaders = new Dictionary<string, Shader>();
 
     public static void Load()
     {
@@ -21,6 +22,7 @@ public static class Resources
         foreach (string spritePath in Directory.GetFiles(Game.Dir + "sprite/", "*.png", SearchOption.AllDirectories))
         {
             Sprites.Add(Path.GetFileNameWithoutExtension(spritePath), Raylib.LoadTexture(spritePath));
+            Raylib.SetTextureFilter(Sprites[Path.GetFileNameWithoutExtension(spritePath)], TextureFilter.Bilinear);
         }
         
         foreach (string soundPath in Directory.GetFiles(Game.Dir + "sound/", "*", SearchOption.AllDirectories))
@@ -40,6 +42,11 @@ public static class Resources
         
         // Fonts.Add("sd_auto_pilot", Raylib.LoadFontEx(Game.Dir + "font/sd_auto_pilot.ttf", 21, null, 0));
         // Fonts.Add("arcadepix", Raylib.LoadFontEx(Game.Dir + "font/arcadepix.ttf", 10, null, 0));
+        
+        foreach (string shaderPath in Directory.GetFiles(Game.Dir + "shader/", "*", SearchOption.AllDirectories))
+        {
+            Shaders.Add(Path.GetFileNameWithoutExtension(shaderPath), Raylib.LoadShader("", shaderPath));
+        }
 
         
         Console.WriteLine("All game files loaded OK!");

@@ -21,7 +21,8 @@ public class MainMenu : Scene
     {
         Raylib.ClearBackground(Color.Blank);
         
-        Raylib.DrawCircle(360, 360, 360, new Color(10, 15, 50));
+        Raylib.DrawCircle(360, 360, 350, new Color(10, 15, 50));
+        Raylib.DrawTexture(Resources.Sprites["bg"], 0, 0, Color.DarkBlue);
 
         Camera2D spin = new Camera2D();
         spin.Target = new Vector2(360, 360);
@@ -29,30 +30,28 @@ public class MainMenu : Scene
         spin.Rotation = Time.Scaled * 60;
         spin.Zoom = 1;
         Game.SetCamera(spin);
-        Raylib.DrawTexture(Resources.Sprites["logo"], 180, 180, Color.White);
+        Raylib.DrawTextureEx(Resources.Sprites["logo"], new Vector2(270, 270), 0, 0.5f, Color.White);
         Game.SetCamera();
         
-        if ((Time.Scaled/2) % 1 < 0.5f) {ImGui.DrawTextRadial(0, -300, "Click me for more tunes!");}
-        ImGui.DrawTextRadial(0, 300, $"Now Playing: {_nowPlaying}");
+        if ((Time.Scaled/2) % 1 < 0.5f) {ImGui.DrawTextRadial(0, -280, "Click me for more tunes!");}
+        ImGui.DrawTextRadial(0, 280, $"Now Playing: {_nowPlaying}");
         
-        if (Raylib.IsMouseButtonPressed(MouseButton.Left))
+        if (Raylib.CheckCollisionPointCircle(Raylib.GetMousePosition(), new Vector2(360, 360), 90))
         {
-            Raylib.PlaySound(Resources.Sounds["metronome"]);
-            _musicSelected++;
-            _musicSelected %= Resources.Musics.Count;
-            Raylib.StopMusicStream(_menuMusic);
-            var musics = Resources.Musics.ToList();
-            _menuMusic = musics[_musicSelected].Value;
-            _nowPlaying = musics[_musicSelected].Key;
-            Raylib.PlayMusicStream(_menuMusic);
-            Raylib.SetMusicVolume(_menuMusic, 0);
-            Raylib.UpdateMusicStream(_menuMusic);
-            Raylib.SetMusicVolume(_menuMusic, 1);
+            Game.HoverInteractable = true;
+            if (Raylib.IsMouseButtonPressed(MouseButton.Left))
+            {
+                Raylib.PlaySound(Resources.Sounds["metronome"]);
+                _musicSelected++;
+                _musicSelected %= Resources.Musics.Count;
+                Raylib.StopMusicStream(_menuMusic);
+                var musics = Resources.Musics.ToList();
+                _menuMusic = musics[_musicSelected].Value;
+                _nowPlaying = musics[_musicSelected].Key;
+                Raylib.PlayMusicStream(_menuMusic);
+            }
         }
-        else
-        {
-            Raylib.UpdateMusicStream(_menuMusic);
-        }
-        
+
+        Raylib.UpdateMusicStream(_menuMusic);
     }
 }
