@@ -1,11 +1,11 @@
 Raylib Jam
 
 Stack:
- - Text Scroller
  - Flyin animation
  - Pulse animation
  - Globe background animation
  - Music "Visualizer" animation
+ - Box2d
 
 
 Requirements:
@@ -30,3 +30,4 @@ Monster Ideas:
  - The moon (squashed, not circular)
  - Deviantart OC
  - Modern smartphone
+ - 

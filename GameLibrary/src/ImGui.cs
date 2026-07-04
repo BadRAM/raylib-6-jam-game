@@ -10,6 +10,7 @@ public static class ImGui
     private static Sound _buttonRelease;
     private static Font _defaultFont;
     private static int _defaultFontSize = 40;
+    private static int _defaultTextSpacing = 3;
 
     static ImGui()
     {
@@ -29,29 +30,37 @@ public static class ImGui
         DrawText(text, new Vector2(x, y), size);
     }
 
-    public static void DrawTextRadial(float angle, float radius, string text)
+    public static void DrawTextRadial(float angle, float radius, string text, float maxArc = 180)
     {
-        float spacing = 3;
-        Vector2 size = Raylib.MeasureTextEx(_defaultFont, text, _defaultFontSize, spacing);
+        Vector2 size = Raylib.MeasureTextEx(_defaultFont, text, _defaultFontSize, _defaultTextSpacing);
         Camera2D spin = new Camera2D
         {
             Target = new Vector2(0, 0),
             Offset = new Vector2(360, 360),
-            Rotation = (90 * size.X) / (MathF.PI * radius) + angle,
+            Rotation = MeasureTextAngle(radius, text) / 2 + angle,
             Zoom = 1
         };
         
         for (int i = 0; i < text.Length; i++)
         {
             string character = text.Substring(i, 1);
-            float width = Raylib.MeasureTextEx(_defaultFont, character, _defaultFontSize, spacing).X;
-            float rotateBy = (180 * (width + spacing)) / (MathF.PI * radius);
+            float width = Raylib.MeasureTextEx(_defaultFont, character, _defaultFontSize, _defaultTextSpacing).X;
+            float rotateBy = (180 * (width + _defaultTextSpacing)) / (MathF.PI * radius);
             spin.Rotation -= rotateBy / 2;
-            Game.SetCamera(spin);
-            Raylib.DrawTextCodepoint(_defaultFont, character[0], new Vector2(-width/2, radius - size.Y/2), _defaultFontSize, Color.White);
+            if (spin.Rotation < maxArc/2 && spin.Rotation > -maxArc/2)
+            {
+                Game.SetCamera(spin);
+                Raylib.DrawTextCodepoint(_defaultFont, character[0], new Vector2(-width/2, radius - size.Y/2), _defaultFontSize, Color.White);
+            }
             spin.Rotation -= rotateBy / 2;
         }
         Game.SetCamera();
+    }
+
+    public static float MeasureTextAngle(float radius, string text)
+    {
+        Vector2 size = Raylib.MeasureTextEx(_defaultFont, text, _defaultFontSize, _defaultTextSpacing);
+        return (180 * size.X) / (MathF.PI * radius);
     }
     
     public static bool Button(string label, int x, int y)

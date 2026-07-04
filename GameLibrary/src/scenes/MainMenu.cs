@@ -33,7 +33,6 @@ public class MainMenu : Scene
         Raylib.DrawTextureEx(Resources.Sprites["logo"], new Vector2(270, 270), 0, 0.5f, Color.White);
         Game.SetCamera();
         
-        if ((Time.Scaled/2) % 1 < 0.5f) {ImGui.DrawTextRadial(0, -280, "Click me for more tunes!");}
         ImGui.DrawTextRadial(0, 280, $"Now Playing: {_nowPlaying}");
         
         if (Raylib.CheckCollisionPointCircle(Raylib.GetMousePosition(), new Vector2(360, 360), 90))

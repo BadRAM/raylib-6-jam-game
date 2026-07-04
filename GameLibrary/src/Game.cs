@@ -22,6 +22,9 @@ public static class Game
 
     private static ConfigFlags _defaultFlags = ConfigFlags.TransparentWindow | ConfigFlags.UndecoratedWindow | ConfigFlags.Msaa4xHint;
     private static Vector2 _lastWindowDelta;
+
+    private static List<string> _scrollerTexts = new List<string>();
+    private static float _scrollerAngle = 500;
     
 
     public static void Load(bool isWeb)
@@ -39,6 +42,10 @@ public static class Game
         _screenShaderMaskLocation = Raylib.GetShaderLocation(_screenShader, "mask");
         
         ActiveScene = new MainMenu();
+        
+        ScrollText("SCROLLING TEXT, ON A CIRCLE. ONLY POSSIBLE IN RAYLIB THROUGH THE DARK MAJICKS OF BADRAM AND HIS MAD SKILLS.");
+        ScrollText("DID YOU THINK I WAS DONE? I'VE ONLY BEGUN TO SCROLL MY TEXT!");
+        ScrollText("TEXT SCROLLS WILL RETURN");
     }
     
     public static void Update()
@@ -68,6 +75,19 @@ public static class Game
         SetCamera();
         
         ActiveScene.Update();
+        if (_scrollerTexts.Count > 0)
+        {
+            ImGui.DrawTextRadial(_scrollerAngle, -280, _scrollerTexts[0]);
+            _scrollerAngle -= 1;
+            if (_scrollerAngle < -90 + -ImGui.MeasureTextAngle(280, _scrollerTexts[0]) / 2)
+            {
+                _scrollerTexts.RemoveAt(0);
+                if (_scrollerTexts.Count > 0)
+                {
+                    _scrollerAngle = ImGui.MeasureTextAngle(280, _scrollerTexts[0]) / 2 + 90;
+                }
+            }
+        }
         
         while (LateActions.Count > 0) LateActions.Dequeue().Invoke();
         
@@ -121,6 +141,15 @@ public static class Game
         Rlgl.SetBlendFactorsSeparate(Rlgl.ZERO, Rlgl.ONE, Rlgl.ONE, Rlgl.ZERO, Rlgl.FUNC_ADD, Rlgl.FUNC_ADD);
         Raylib.DrawTexture(Resources.Sprites["mask"], 0, 0, Color.White);
         Raylib.EndBlendMode();
+    }
+
+    public static void ScrollText(string text)
+    {
+        _scrollerTexts.Add(text);
+        if (_scrollerTexts.Count == 1)
+        {
+            _scrollerAngle = ImGui.MeasureTextAngle(280, _scrollerTexts[0]) / 2 + 180;
+        }
     }
     
     public static void SetCamera(Camera2D? camera = null)
