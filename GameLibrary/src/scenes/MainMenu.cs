@@ -6,24 +6,40 @@ namespace GameLibrary;
 public class MainMenu : Scene
 {
     private Music _menuMusic = Resources.Musics["null_function"];
-    private int _musicSelected = 0;
-    private string _nowPlaying = "null_function";
+    private PhysicsTest _physicsTest;
     
     private List<Font> _testFonts = new List<Font>();
     
     public MainMenu()
     {
-        Raylib.SetMusicVolume(_menuMusic, 0.5f);
-        Raylib.PlayMusicStream(_menuMusic);
+        ShuffleMusic();
+        _physicsTest = new PhysicsTest();
     }
     
     public override void Update()
     {
         Raylib.ClearBackground(Color.Blank);
         
-        Raylib.DrawCircle(360, 360, 350, new Color(10, 15, 50));
-        Raylib.DrawTexture(Resources.Sprites["bg"], 0, 0, Color.DarkBlue);
-
+        Raylib.DrawCircle(360, 360, 350, Color.DarkBlue);
+        Raylib.DrawTexturePro(
+            Resources.Sprites["radial"], 
+            new Rectangle(0, 0, Resources.Sprites["radial"].Dimensions), 
+            new Rectangle(0, 0, 720, 720), 
+            Vector2.Zero, 
+            0, 
+            Color.Black);
+        for (int i = 0; i < 8; i++)
+        {
+            Raylib.DrawCircleLines(360, 360, 45 * i, Color.Black);
+        }
+        // Raylib.DrawLineEx(new Vector2(0, 0), new Vector2(720, 720), 4, Color.Black);
+        Raylib.DrawLine(0, 0, 720, 720, Color.Black);
+        Raylib.DrawLine(0, 720, 720, 0, Color.Black);
+        Raylib.DrawLine(360, 0, 360, 720, Color.Black);
+        Raylib.DrawLine(0, 360, 720, 360, Color.Black);
+        
+        _physicsTest.Step();
+        
         Camera2D spin = new Camera2D();
         spin.Target = new Vector2(360, 360);
         spin.Offset = spin.Target;
@@ -33,24 +49,34 @@ public class MainMenu : Scene
         Raylib.DrawTextureEx(Resources.Sprites["logo"], new Vector2(270, 270), 0, 0.5f, Color.White);
         Game.SetCamera();
         
-        ImGui.DrawTextRadial(0, 280, $"Now Playing: {_nowPlaying}");
-        
         if (Raylib.CheckCollisionPointCircle(Raylib.GetMousePosition(), new Vector2(360, 360), 90))
         {
             Game.HoverInteractable = true;
             if (Raylib.IsMouseButtonPressed(MouseButton.Left))
             {
-                Raylib.PlaySound(Resources.Sounds["metronome"]);
-                _musicSelected++;
-                _musicSelected %= Resources.Musics.Count;
-                Raylib.StopMusicStream(_menuMusic);
-                var musics = Resources.Musics.ToList();
-                _menuMusic = musics[_musicSelected].Value;
-                _nowPlaying = musics[_musicSelected].Key;
-                Raylib.PlayMusicStream(_menuMusic);
+                ShuffleMusic();
             }
         }
 
+        if (Raylib.IsMusicStreamPlaying(_menuMusic))
+        {
+            ShuffleMusic();
+        }
+        
+        Game.Mask();
+
         Raylib.UpdateMusicStream(_menuMusic);
+    }
+
+    private void ShuffleMusic()
+    {
+        Raylib.PlaySound(Resources.Sounds["metronome"]);
+        Raylib.StopMusicStream(_menuMusic);
+        var musics = Resources.Musics.ToList().PickRandom();
+        _menuMusic = musics.Value;
+        _menuMusic.Looping = false;
+        Game.ScrollText($"Now playing: {musics.Key}");
+        Raylib.SetMusicVolume(_menuMusic, 0.5f);
+        Raylib.PlayMusicStream(_menuMusic);
     }
 }

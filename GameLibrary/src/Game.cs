@@ -43,7 +43,7 @@ public static class Game
         
         ActiveScene = new MainMenu();
         
-        ScrollText("SCROLLING TEXT, ON A CIRCLE. ONLY POSSIBLE IN RAYLIB THROUGH THE DARK MAJICKS OF BADRAM AND HIS MAD SKILLS.");
+        ScrollText("SCROLLING TEXT, ON A CIRCLE. ONLY POSSIBLE IN RAYLIB THROUGH BADRAM'S MAD SKILLS.");
         ScrollText("DID YOU THINK I WAS DONE? I'VE ONLY BEGUN TO SCROLL MY TEXT!");
         ScrollText("TEXT SCROLLS WILL RETURN");
     }
@@ -62,16 +62,22 @@ public static class Game
         }
         else
         {
-            if (Raylib.IsMouseButtonDown(MouseButton.Left))
+            if (!Raylib.CheckCollisionPointCircle(Raylib.GetMousePosition(), new Vector2(360, 360), 310))
             {
-                _lastWindowDelta = Raylib.GetMouseDelta() + _lastWindowDelta;
-                Vector2 winPos = Raylib.GetWindowPosition() + _lastWindowDelta;
-                Raylib.SetWindowPosition((int)winPos.X, (int)winPos.Y);
+                HoverInteractable = true;
+                if (Raylib.IsMouseButtonDown(MouseButton.Left))
+                {
+                    _lastWindowDelta = Raylib.GetMouseDelta() + _lastWindowDelta;
+                    Vector2 winPos = Raylib.GetWindowPosition() + _lastWindowDelta;
+                    Raylib.SetWindowPosition((int)winPos.X, (int)winPos.Y);
+                }
             }
         }
         
         Raylib.BeginDrawing();
+        Raylib.ClearBackground(Color.Blank);
         Raylib.BeginTextureMode(_renderTexture);
+        Raylib.ClearBackground(Color.Blank);
         SetCamera();
         
         ActiveScene.Update();
@@ -135,7 +141,7 @@ public static class Game
         // ImGui.DrawTextRadial(0, -240, $"F:{frame} S:{subframe:N2} A:{angle:N0}");
     }
 
-    private static void Mask()
+    public static void Mask()
     {
         Raylib.BeginBlendMode(BlendMode.CustomSeparate);
         Rlgl.SetBlendFactorsSeparate(Rlgl.ZERO, Rlgl.ONE, Rlgl.ONE, Rlgl.ZERO, Rlgl.FUNC_ADD, Rlgl.FUNC_ADD);
