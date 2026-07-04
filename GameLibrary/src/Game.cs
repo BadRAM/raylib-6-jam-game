@@ -11,6 +11,7 @@ public static class Game
     public static Queue<Action> LateActions = new Queue<Action>(); // LateActions are dequeued and invoked after everything else has updated.
     public static Scene ActiveScene;
     public static bool HoverInteractable;
+    public static bool DebugMode;
 
     // Target Resolution: 720x720
     private static Camera2D _defaultCamera = new Camera2D(new Vector2(0, 0), Vector2.Zero, 0, 1);
@@ -23,8 +24,9 @@ public static class Game
     private static Vector2 _lastWindowDelta;
     
 
-    public static void Load()
+    public static void Load(bool isWeb)
     {
+        IsWeb = isWeb;
         Raylib.SetConfigFlags(_defaultFlags);
         Raylib.InitWindow(720, 720, "Cool Game :)");
         Raylib.SetTargetFPS(Time.FrameRate);
@@ -42,6 +44,8 @@ public static class Game
     public static void Update()
     {
         Time.UpdateTime();
+
+        if (Raylib.IsKeyPressed(KeyboardKey.F3)) DebugMode = !DebugMode;
 
         HoverInteractable = false;
         if (!Raylib.CheckCollisionPointCircle(Raylib.GetMousePosition(), new Vector2(360, 360), 360))
@@ -70,11 +74,18 @@ public static class Game
         Raylib.EndMode2D();
         Raylib.EndTextureMode();
         _activeCamera = _defaultCamera;
-        
-        Raylib.BeginShaderMode(_screenShader);
-        Raylib.SetShaderValueTexture(_screenShader, _screenShaderMaskLocation, Resources.Sprites["screen_mask"]);
-        Raylib.DrawTextureRec(_renderTexture.Texture, new Rectangle(0, 0, 720, -720), Vector2.Zero, Color.White);
-        Raylib.EndShaderMode();
+
+        if (!DebugMode)
+        {
+            Raylib.BeginShaderMode(_screenShader);
+            Raylib.SetShaderValueTexture(_screenShader, _screenShaderMaskLocation, Resources.Sprites["screen_mask"]);
+            Raylib.DrawTextureRec(_renderTexture.Texture, new Rectangle(0, 0, 720, -720), Vector2.Zero, Color.White);
+            Raylib.EndShaderMode();
+        }
+        else
+        {
+            Raylib.DrawTextureRec(_renderTexture.Texture, new Rectangle(0, 0, 720, -720), Vector2.Zero, Color.White);
+        }
         
         // DrawRing(Raylib.GetMousePosition().Y, Raylib.GetMousePosition().X / 720f);
         DrawRing(Time.Scaled * 2, MathF.Sin(Time.Scaled / 2f) / 2f + 0.5f);

@@ -45,9 +45,13 @@ public static class Resources
         
         foreach (string shaderPath in Directory.GetFiles(Game.Dir + "shader/", "*", SearchOption.AllDirectories))
         {
-            Shaders.Add(Path.GetFileNameWithoutExtension(shaderPath), Raylib.LoadShader("", shaderPath));
+            string fileName = Path.GetFileNameWithoutExtension(shaderPath);
+            string version = fileName.Substring(fileName.Length - 3);
+            if ( Game.IsWeb && version != "100") continue;
+            if (!Game.IsWeb && version != "330") continue;
+            Console.WriteLine($"Loading shader: {shaderPath}" + $"\n{File.ReadAllText(shaderPath)}");
+            Shaders.Add(fileName.Substring(0, fileName.Length - 4), Raylib.LoadShader("", shaderPath));
         }
-
         
         Console.WriteLine("All game files loaded OK!");
     }
