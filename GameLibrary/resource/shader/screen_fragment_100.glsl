@@ -15,7 +15,7 @@ uniform sampler2D mask;
 
 void main()
 {
-    vec4 maskColour = texture2D(mask, mod(fragTexCoord / (vec2(148, 256) / 30000.0), 1.0)) + 0.1;
+    vec4 maskColour = texture2D(mask, mod(fragTexCoord / (vec2(148, 256) / 15000.0), 1.0)) + 0.15;
     vec4 texelColor = texture2D(texture0, fragTexCoord);
 
     gl_FragColor = texelColor*maskColour;

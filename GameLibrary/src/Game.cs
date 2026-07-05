@@ -47,7 +47,8 @@ public static class Game
         
         ScrollText("SCROLLING TEXT, ON A CIRCLE. ONLY POSSIBLE IN RAYLIB THROUGH BADRAM'S MAD SKILLS.");
         ScrollText("DID YOU THINK I WAS DONE? I'VE ONLY BEGUN TO SCROLL MY TEXT!");
-        ScrollText("TEXT SCROLLS WILL RETURN");
+        ScrollText("I'M A TEXT SCROLLING MACHINE!");
+        ScrollText("TEXT SCROLLS WILL RETURN.");
     }
     
     public static void Update()
@@ -108,7 +109,7 @@ public static class Game
         if (!DebugMode)
         {
             Raylib.BeginShaderMode(_screenShader);
-            Raylib.SetShaderValueTexture(_screenShader, _screenShaderMaskLocation, Resources.Sprites["screen_mask"]);
+            Raylib.SetShaderValueTexture(_screenShader, _screenShaderMaskLocation, Resources.Sprites["screen_mask_colored"]);
             Raylib.DrawTextureRec(_renderTexture.Texture, new Rectangle(0, 0, 720, -720), Vector2.Zero, Color.White);
             Raylib.EndShaderMode();
         }
@@ -148,6 +149,7 @@ public static class Game
 
         Rectangle src = new Rectangle(0, 0, 720, 720);
         Rectangle dst = new Rectangle(360, 360, 720, 720);
+        Raylib.DrawTexturePro(Resources.Sprites[$"glass_shine"], src, dst, new Vector2(360, 360), -40, Color.White);
         Raylib.DrawTexturePro(Resources.Sprites[$"ring{frame}"], src, dst, new Vector2(360, 360), angle, Color.White);
         Raylib.DrawTexturePro(Resources.Sprites[$"ring{Math.Min(frame + 1, 9)}"], src, dst, new Vector2(360, 360), angle, new Color(255, 255, 255, (int)(255 * subframe)));
         
@@ -166,7 +168,7 @@ public static class Game
         Raylib.DrawTexture(Resources.Sprites["mask"], 0, 0, Color.White);
         Raylib.EndBlendMode();
     }
-
+    
     public static void ScrollText(string text)
     {
         _scrollerTexts.Add(text);

@@ -43,6 +43,8 @@ public class MainMenu : Scene
         Raylib.DrawLine(0, 720, 720, 0, Color.Black);
         Raylib.DrawLine(360, 0, 360, 720, Color.Black);
         Raylib.DrawLine(0, 360, 720, 360, Color.Black);
+
+        if (Raylib.IsKeyDown(KeyboardKey.A)) Raylib.ClearBackground(new Color(32, 32, 32, 255));
         
         DrawCirclePulse((Time.Scaled / 4) % 1);
         DrawCirclePulse(((Time.Scaled + 2) / 4) % 1);
@@ -63,6 +65,9 @@ public class MainMenu : Scene
             Game.HoverInteractable = true;
             if (Raylib.IsMouseButtonPressed(MouseButton.Left))
             {
+                Sound sound = Resources.Sounds["metronome"];
+                Raylib.SetSoundVolume(sound, 0.5f);
+                Raylib.PlaySound(sound);
                 ShuffleMusic();
             }
         }
@@ -79,7 +84,6 @@ public class MainMenu : Scene
 
     private void ShuffleMusic()
     {
-        Raylib.PlaySound(Resources.Sounds["metronome"]);
         Raylib.StopMusicStream(_menuMusic);
         var musics = Resources.Musics.ToList().PickRandom();
         _menuMusic = musics.Value;
@@ -100,6 +104,6 @@ public class MainMenu : Scene
             dst, 
             dst.Size/2, 
             0, 
-            new Color(255, 255, 255, 128));
+            new Color(255, 255, 255, (int)float.Lerp(224, 0, t)));
     }
 }
