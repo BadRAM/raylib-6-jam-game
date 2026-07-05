@@ -20,6 +20,8 @@ public static class Game
     private static Shader _screenShader;
     private static int _screenShaderMaskLocation;
 
+    private static AnimCamera _deviceCameraAnim = new AnimCamera(new Camera2D(Vector2.Zero, Vector2.Zero, 0, 1));
+
     private static ConfigFlags _defaultFlags = ConfigFlags.TransparentWindow | ConfigFlags.UndecoratedWindow | ConfigFlags.Msaa4xHint;
     private static Vector2 _lastWindowDelta;
 
@@ -83,14 +85,14 @@ public static class Game
         ActiveScene.Update();
         if (_scrollerTexts.Count > 0)
         {
-            ImGui.DrawTextRadial(_scrollerAngle, -280, _scrollerTexts[0]);
+            ImGui.DrawTextRadial(_scrollerAngle, -280, _scrollerTexts[0], 160);
             _scrollerAngle -= 1;
-            if (_scrollerAngle < -90 + -ImGui.MeasureTextAngle(280, _scrollerTexts[0]) / 2)
+            if (_scrollerAngle < -80 + -ImGui.MeasureTextAngle(280, _scrollerTexts[0]) / 2)
             {
                 _scrollerTexts.RemoveAt(0);
                 if (_scrollerTexts.Count > 0)
                 {
-                    _scrollerAngle = ImGui.MeasureTextAngle(280, _scrollerTexts[0]) / 2 + 90;
+                    _scrollerAngle = ImGui.MeasureTextAngle(280, _scrollerTexts[0]) / 2 + 80;
                 }
             }
         }
@@ -101,6 +103,8 @@ public static class Game
         Raylib.EndTextureMode();
         _activeCamera = _defaultCamera;
 
+        Raylib.BeginMode2D(_deviceCameraAnim.Sample(Time.Scaled));
+        
         if (!DebugMode)
         {
             Raylib.BeginShaderMode(_screenShader);
@@ -118,9 +122,22 @@ public static class Game
 
         Mask();
         
+        Raylib.EndMode2D();
+        
         Raylib.EndDrawing();
         
         Raylib.SetMouseCursor(HoverInteractable ? MouseCursor.PointingHand : MouseCursor.Default);
+    }
+
+    public static void MoveDevice(Vector2 center, float zoom, float duration, Func<float, float>? easing = null)
+    {
+        _deviceCameraAnim = new AnimCamera
+        (
+            _deviceCameraAnim.Sample(Time.Scaled),
+            new Camera2D(center, new Vector2(360, 360), 0, zoom), 
+            duration, 
+            easing ?? Easings.OutQuint
+        );
     }
     
     // angle is 0-360, tilt is 0-1
@@ -128,17 +145,18 @@ public static class Game
     {
         int frame = (int)MathF.Floor((tilt % 1) * 10);
         float subframe = ((tilt % 1) * 10) % 1;
-        Camera2D spin = new Camera2D();
-        spin.Target = new Vector2(360, 360);
-        spin.Offset = spin.Target;
-        spin.Rotation = angle;
-        spin.Zoom = 1;
-        Game.SetCamera(spin);
-        Raylib.DrawTexture(Resources.Sprites[$"ring{frame}"], 0, 0, Color.White);
-        Raylib.DrawTexture(Resources.Sprites[$"ring{Math.Min(frame + 1, 9)}"], 0, 0, new Color(255, 255, 255, (int)(255 * subframe)));
-        Game.SetCamera();
+
+        Rectangle src = new Rectangle(0, 0, 720, 720);
+        Rectangle dst = new Rectangle(360, 360, 720, 720);
+        Raylib.DrawTexturePro(Resources.Sprites[$"ring{frame}"], src, dst, new Vector2(360, 360), angle, Color.White);
+        Raylib.DrawTexturePro(Resources.Sprites[$"ring{Math.Min(frame + 1, 9)}"], src, dst, new Vector2(360, 360), angle, new Color(255, 255, 255, (int)(255 * subframe)));
         
         // ImGui.DrawTextRadial(0, -240, $"F:{frame} S:{subframe:N2} A:{angle:N0}");
+    }
+
+    private static void DrawWaveform()
+    {
+        
     }
 
     public static void Mask()
@@ -154,7 +172,7 @@ public static class Game
         _scrollerTexts.Add(text);
         if (_scrollerTexts.Count == 1)
         {
-            _scrollerAngle = ImGui.MeasureTextAngle(280, _scrollerTexts[0]) / 2 + 180;
+            _scrollerAngle = ImGui.MeasureTextAngle(280, _scrollerTexts[0]) / 2 + 80;
         }
     }
     

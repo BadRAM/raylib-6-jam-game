@@ -29,13 +29,13 @@ public class PhysicsTest
         
         B2WorldDef worldDef = b2DefaultWorldDef();
         
-        worldDef.gravity = new B2Vec2(0.0f, 100.0f);
+        worldDef.gravity = new B2Vec2(0.0f, 500.0f);
         WorldId = b2CreateWorld(worldDef);
 
         for (int i = 0; i < 360; i+=2)
         {
             B2BodyDef groundBodyDef = b2DefaultBodyDef();
-            groundBodyDef.position = (Utils.AngleLength(i, 310f) + new Vector2(360, 360)).ToB2();
+            groundBodyDef.position = (Utils.AngleLength(i, 312f) + new Vector2(360, 360)).ToB2();
             groundBodyDef.rotation = b2MakeRot(-i * (MathF.PI / 180f));
         
             B2BodyId groundId = b2CreateBody(WorldId, groundBodyDef);
@@ -58,7 +58,7 @@ public class PhysicsTest
         
             B2Circle dynamicCircle;
             dynamicCircle.center = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), Game.GetActiveCamera()).ToB2();
-            dynamicCircle.radius = 16;
+            dynamicCircle.radius = 14;
         
             B2ShapeDef shapeDef = b2DefaultShapeDef();
             shapeDef.density = 1.0f;

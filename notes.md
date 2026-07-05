@@ -1,11 +1,9 @@
 Raylib Jam
 
 Stack:
- - Flyin animation
- - Pulse animation
- - Globe background animation
  - Music "Visualizer" animation
- - Box2d
+ - Globe background animation
+ - Flyin animation
 
 
 Requirements:

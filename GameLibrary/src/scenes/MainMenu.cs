@@ -18,9 +18,15 @@ public class MainMenu : Scene
     
     public override void Update()
     {
-        Raylib.ClearBackground(Color.Blank);
+        if (Raylib.IsKeyPressed(KeyboardKey.One  )) Game.MoveDevice(new Vector2(360, 360), 1,     1);
+        if (Raylib.IsKeyPressed(KeyboardKey.Two  )) Game.MoveDevice(new Vector2( 90,  90), 0.25f, 1);
+        if (Raylib.IsKeyPressed(KeyboardKey.Three)) Game.MoveDevice(new Vector2( 90, 630), 0.25f, 1);
+        if (Raylib.IsKeyPressed(KeyboardKey.Four )) Game.MoveDevice(new Vector2(180, 540), 0.5f,  1);
         
-        Raylib.DrawCircle(360, 360, 350, Color.DarkBlue);
+        
+        Raylib.ClearBackground(Color.DarkBlue);
+        
+        // Raylib.DrawCircle(360, 360, 350, Color.DarkBlue);
         Raylib.DrawTexturePro(
             Resources.Sprites["radial"], 
             new Rectangle(0, 0, Resources.Sprites["radial"].Dimensions), 
@@ -37,6 +43,9 @@ public class MainMenu : Scene
         Raylib.DrawLine(0, 720, 720, 0, Color.Black);
         Raylib.DrawLine(360, 0, 360, 720, Color.Black);
         Raylib.DrawLine(0, 360, 720, 360, Color.Black);
+        
+        DrawCirclePulse((Time.Scaled / 4) % 1);
+        DrawCirclePulse(((Time.Scaled + 2) / 4) % 1);
         
         _physicsTest.Step();
         
@@ -58,7 +67,7 @@ public class MainMenu : Scene
             }
         }
 
-        if (Raylib.IsMusicStreamPlaying(_menuMusic))
+        if (!Raylib.IsMusicStreamPlaying(_menuMusic))
         {
             ShuffleMusic();
         }
@@ -78,5 +87,19 @@ public class MainMenu : Scene
         Game.ScrollText($"Now playing: {musics.Key}");
         Raylib.SetMusicVolume(_menuMusic, 0.5f);
         Raylib.PlayMusicStream(_menuMusic);
+    }
+
+    private void DrawCirclePulse(float t)
+    {
+        t = Easings.OutQuad(t);
+        Rectangle src = Resources.Sprites["circle_soft"].Rect();
+        Rectangle dst = new Rectangle(360, 360, new Vector2(820, 820) * t);
+        Raylib.DrawTexturePro(
+            Resources.Sprites["circle_soft"], 
+            src, 
+            dst, 
+            dst.Size/2, 
+            0, 
+            new Color(255, 255, 255, 128));
     }
 }

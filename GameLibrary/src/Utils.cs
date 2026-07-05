@@ -7,6 +7,9 @@ namespace GameLibrary;
 // Designated dumping ground for extension methods and math functions
 public static class Utils
 {
+    public static Vector2 Size(this Texture2D tex) => new(tex.Width, tex.Height);
+    public static Rectangle Rect(this Texture2D tex) => new(Vector2.Zero, tex.Width, tex.Height);
+    
     public static float MoveTowards(this float start, float target, float maxDistanceDelta)
     {
         if (Math.Abs(target - start) < maxDistanceDelta)
