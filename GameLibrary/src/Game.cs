@@ -12,6 +12,8 @@ public static class Game
     public static Scene ActiveScene;
     public static bool HoverInteractable;
     public static bool DebugMode;
+    public static List<MusicAsset> Playlist;
+    public static MusicAsset MusicPlaying;
 
     // Target Resolution: 720x720
     private static Camera2D _defaultCamera = new Camera2D(new Vector2(0, 0), Vector2.Zero, 0, 1);
@@ -40,8 +42,10 @@ public static class Game
         _renderTexture = Raylib.LoadRenderTexture(720, 720);
         
         Resources.Load();
+        Assets.Load();
         _screenShader = Resources.Shaders["screen_fragment"];
         _screenShaderMaskLocation = Raylib.GetShaderLocation(_screenShader, "mask");
+        ShuffleMusic(Assets.Musics.Values.ToList());
         
         ActiveScene = new MainMenu();
         
@@ -76,6 +80,12 @@ public static class Game
                 }
             }
         }
+
+        if (!Raylib.IsMusicStreamPlaying(MusicPlaying.Music))
+        {
+            ShuffleMusic(Playlist);
+        }
+        MusicPlaying.Update();
         
         Raylib.BeginDrawing();
         Raylib.ClearBackground(Color.Blank);
@@ -156,11 +166,6 @@ public static class Game
         // ImGui.DrawTextRadial(0, -240, $"F:{frame} S:{subframe:N2} A:{angle:N0}");
     }
 
-    private static void DrawWaveform()
-    {
-        
-    }
-
     public static void Mask()
     {
         Raylib.BeginBlendMode(BlendMode.CustomSeparate);
@@ -192,6 +197,22 @@ public static class Game
         Raylib.EndMode2D();
         _activeCamera = cam;
         Raylib.BeginMode2D(_activeCamera);
+    }
+    
+    public static void ShuffleMusic(List<MusicAsset> music)
+    {
+        Playlist = music;
+        music = new List<MusicAsset>(Playlist); // clone list so we can modify it without breaking referenced static lists.
+        music.Remove(MusicPlaying); // Prevent shuffle from picking the song that was already playing.
+
+        if (music.Count == 0) return;
+        
+        MusicPlaying?.Stop();
+        MusicPlaying = music.PickRandom();
+        MusicPlaying.Music.Looping = false;
+        MusicPlaying.Play();
+        
+        ScrollText($"Now Playing: {MusicPlaying.Title} - {MusicPlaying.ArtistName}");
     }
 
     public static Camera2D GetActiveCamera() => _activeCamera;

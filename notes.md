@@ -3,10 +3,10 @@ Raylib Jam
 Stack:
  - Radial menu
  - Cleanup, sensible scene system and device/scene distinction. (Gamescene vs Devicescene?)
- - Music "Visualizer" animation
  - Intro 'cutscene'
  - Globe background animation
- - Flyin animation
+ - Find a suitable SFX source
+ - Flipover animation
 
 
 Requirements:

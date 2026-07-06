@@ -23,21 +23,25 @@ public static class Resources
         {
             Sprites.Add(Path.GetFileNameWithoutExtension(spritePath), Raylib.LoadTexture(spritePath));
             Raylib.SetTextureFilter(Sprites[Path.GetFileNameWithoutExtension(spritePath)], TextureFilter.Bilinear);
+            Console.WriteLine($"Sprites[{Path.GetFileNameWithoutExtension(spritePath)}]");
         }
         
         foreach (string soundPath in Directory.GetFiles(Game.Dir + "sound/", "*", SearchOption.AllDirectories))
         {
             Sounds.Add(Path.GetFileNameWithoutExtension(soundPath), Raylib.LoadSound(soundPath));
+            Console.WriteLine($"Sounds[{Path.GetFileNameWithoutExtension(soundPath)}]");
         }
         
         foreach (string musicPath in Directory.GetFiles(Game.Dir + "music/", "*", SearchOption.AllDirectories))
         {
             Musics.Add(Path.GetFileNameWithoutExtension(musicPath), Raylib.LoadMusicStream(musicPath));
+            Console.WriteLine($"Musics[{Path.GetFileNameWithoutExtension(musicPath)}]");
         }
         
         foreach (string fontPath in Directory.GetFiles(Game.Dir + "font/", "*", SearchOption.AllDirectories))
         {
             Fonts.Add(Path.GetFileNameWithoutExtension(fontPath), Raylib.LoadFont(fontPath));
+            Console.WriteLine($"Fonts[{Path.GetFileNameWithoutExtension(fontPath)}]");
         }
         
         // Fonts.Add("sd_auto_pilot", Raylib.LoadFontEx(Game.Dir + "font/sd_auto_pilot.ttf", 21, null, 0));

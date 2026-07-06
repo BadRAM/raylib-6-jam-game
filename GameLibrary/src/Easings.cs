@@ -4,39 +4,39 @@ namespace GameLibrary;
 public static class Easings
 {
 	// My easings
-	public static double FullSine(double t)
+	public static float FullSine(float t)
 	{
-		return Math.Sin(t * Math.PI * 2);
+		return MathF.Sin(t * MathF.PI * 2);
 	}
 
-	public static double HalfSine(double t)
+	public static float HalfSine(float t)
 	{
-		return Math.Sin(t * Math.PI);
+		return MathF.Sin(t * MathF.PI);
 	}
 
-	public static double QuarterSine(double t)
+	public static float QuarterSine(float t)
 	{
-		return Math.Sin(t * Math.PI / 2);
+		return MathF.Sin(t * MathF.PI / 2);
 	}
 
-	public static double Ballistic(double t)
+	public static float Ballistic(float t)
 	{
 		return HalfSine(t); // Good enough
 	}
 
-	public static double Bounce(double t)
+	public static float Bounce(float t)
 	{
 		return 1 - OutBounce(t);
 	}
 
 	// Bounce but it starts from 0 and travels up to 1 before falling and bouncing.
-	public static double FullBounce(double t)
+	public static float FullBounce(float t)
 	{
 		// negative intersection point: -0.363636...
-		return Bounce(Map(t, 0, 1, -0.363636, 1));
+		return Bounce(Map(t, 0, 1, -0.363636f, 1));
 	}
 	
-	private static double Map(double value, double fromLow, double fromHigh, double toLow, double toHigh) 
+	public static float Map(float value, float fromLow, float fromHigh, float toLow, float toHigh) 
 	{
 		return (value - fromLow) * (toHigh - toLow) / (fromHigh - fromLow) + toLow;
 	}

@@ -12,7 +12,7 @@ public class MainMenu : Scene
     
     public MainMenu()
     {
-        ShuffleMusic();
+        Game.ShuffleMusic(Assets.Musics.Values.ToList());
         _physicsTest = new PhysicsTest();
     }
     
@@ -22,32 +22,20 @@ public class MainMenu : Scene
         if (Raylib.IsKeyPressed(KeyboardKey.Two  )) Game.MoveDevice(new Vector2( 90,  90), 0.25f, 1);
         if (Raylib.IsKeyPressed(KeyboardKey.Three)) Game.MoveDevice(new Vector2( 90, 630), 0.25f, 1);
         if (Raylib.IsKeyPressed(KeyboardKey.Four )) Game.MoveDevice(new Vector2(180, 540), 0.5f,  1);
+        if (Raylib.IsKeyPressed(KeyboardKey.Five )) Game.MoveDevice(new Vector2(240, 480), 0.66f,  1);
         
         
         Raylib.ClearBackground(Color.DarkBlue);
         
-        // Raylib.DrawCircle(360, 360, 350, Color.DarkBlue);
-        Raylib.DrawTexturePro(
-            Resources.Sprites["radial"], 
-            new Rectangle(0, 0, Resources.Sprites["radial"].Dimensions), 
-            new Rectangle(0, 0, 720, 720), 
-            Vector2.Zero, 
-            0, 
-            Color.Black);
-        for (int i = 0; i < 8; i++)
-        {
-            Raylib.DrawCircleLines(360, 360, 45 * i, Color.Black);
-        }
-        // Raylib.DrawLineEx(new Vector2(0, 0), new Vector2(720, 720), 4, Color.Black);
-        Raylib.DrawLine(0, 0, 720, 720, Color.Black);
-        Raylib.DrawLine(0, 720, 720, 0, Color.Black);
-        Raylib.DrawLine(360, 0, 360, 720, Color.Black);
-        Raylib.DrawLine(0, 360, 720, 360, Color.Black);
-
+        BackgroundDraw.Web();
+        
         if (Raylib.IsKeyDown(KeyboardKey.A)) Raylib.ClearBackground(new Color(32, 32, 32, 255));
         
-        DrawCirclePulse((Time.Scaled / 4) % 1);
-        DrawCirclePulse(((Time.Scaled + 2) / 4) % 1);
+        DrawCirclePulse(Math.Max(0, Game.MusicPlaying.Beat() / 4 - 0.5f) % 1);
+        DrawCirclePulse(Math.Max(0, Game.MusicPlaying.Beat() / 4 - 0.0f) % 1);
+        ImGui.DrawTextRadial(0, 160, "beat: " + Game.MusicPlaying.Beat().ToString("N2"));
+        
+        BackgroundDraw.Waveform2();
         
         _physicsTest.Step();
         
@@ -65,32 +53,30 @@ public class MainMenu : Scene
             Game.HoverInteractable = true;
             if (Raylib.IsMouseButtonPressed(MouseButton.Left))
             {
-                Sound sound = Resources.Sounds["metronome"];
-                Raylib.SetSoundVolume(sound, 0.5f);
-                Raylib.PlaySound(sound);
-                ShuffleMusic();
+                // Sound sound = Resources.Sounds["metronome"];
+                // Raylib.SetSoundVolume(sound, 0.5f);
+                // Raylib.PlaySound(sound);
+                Game.ShuffleMusic(Assets.Musics.Values.ToList());
             }
         }
 
-        if (!Raylib.IsMusicStreamPlaying(_menuMusic))
+        if (Game.DebugMode)
         {
-            ShuffleMusic();
+            if (Game.MusicPlaying.IsBeatThisFrame())
+            {
+                Sound sound = Resources.Sounds["metronome"];
+                Raylib.SetSoundVolume(sound, 0.5f);
+                Raylib.PlaySound(sound);
+            }
+
+            if (Raylib.IsKeyPressed(KeyboardKey.Equal)) Game.MusicPlaying.FirstBeat += 0.01f;
+            if (Raylib.IsKeyPressed(KeyboardKey.Minus)) Game.MusicPlaying.FirstBeat -= 0.01f;
+            if (Raylib.IsKeyPressed(KeyboardKey.Enter)) Game.ScrollText(Game.MusicPlaying.Title + " " + Game.MusicPlaying.FirstBeat.ToString("N3"));
         }
         
         Game.Mask();
 
         Raylib.UpdateMusicStream(_menuMusic);
-    }
-
-    private void ShuffleMusic()
-    {
-        Raylib.StopMusicStream(_menuMusic);
-        var musics = Resources.Musics.ToList().PickRandom();
-        _menuMusic = musics.Value;
-        _menuMusic.Looping = false;
-        Game.ScrollText($"Now playing: {musics.Key}");
-        Raylib.SetMusicVolume(_menuMusic, 0.5f);
-        Raylib.PlayMusicStream(_menuMusic);
     }
 
     private void DrawCirclePulse(float t)
