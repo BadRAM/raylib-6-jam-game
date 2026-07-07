@@ -31,8 +31,8 @@ public class MainMenu : Scene
         
         if (Raylib.IsKeyDown(KeyboardKey.A)) Raylib.ClearBackground(new Color(32, 32, 32, 255));
         
-        DrawCirclePulse(Math.Max(0, Game.MusicPlaying.Beat() / 4 - 0.5f) % 1);
-        DrawCirclePulse(Math.Max(0, Game.MusicPlaying.Beat() / 4 - 0.0f) % 1);
+        BackgroundDraw.CirclePulse(Math.Max(0, Game.MusicPlaying.Beat() / 4 - 0.5f) % 1);
+        BackgroundDraw.CirclePulse(Math.Max(0, Game.MusicPlaying.Beat() / 4 - 0.0f) % 1);
         ImGui.DrawTextRadial(0, 160, "beat: " + Game.MusicPlaying.Beat().ToString("N2"));
         
         BackgroundDraw.Waveform2();
@@ -45,20 +45,20 @@ public class MainMenu : Scene
         spin.Rotation = Time.Scaled * 60;
         spin.Zoom = 1;
         Game.SetCamera(spin);
-        Raylib.DrawTextureEx(Resources.Sprites["logo"], new Vector2(270, 270), 0, 0.5f, Color.White);
+        // Raylib.DrawTextureEx(Resources.Sprites["logo"], new Vector2(270, 270), 0, 0.5f, Color.White);
         Game.SetCamera();
         
-        if (Raylib.CheckCollisionPointCircle(Raylib.GetMousePosition(), new Vector2(360, 360), 90))
-        {
-            Game.HoverInteractable = true;
-            if (Raylib.IsMouseButtonPressed(MouseButton.Left))
-            {
-                // Sound sound = Resources.Sounds["metronome"];
-                // Raylib.SetSoundVolume(sound, 0.5f);
-                // Raylib.PlaySound(sound);
-                Game.ShuffleMusic(Assets.Musics.Values.ToList());
-            }
-        }
+        // if (Raylib.CheckCollisionPointCircle(Raylib.GetMousePosition(), new Vector2(360, 360), 90))
+        // {
+        //     Game.HoverInteractable = true;
+        //     if (Raylib.IsMouseButtonPressed(MouseButton.Left))
+        //     {
+        //         // Sound sound = Resources.Sounds["metronome"];
+        //         // Raylib.SetSoundVolume(sound, 0.5f);
+        //         // Raylib.PlaySound(sound);
+        //         Game.ShuffleMusic(Assets.Musics.Values.ToList());
+        //     }
+        // }
 
         if (Game.DebugMode)
         {
@@ -77,19 +77,5 @@ public class MainMenu : Scene
         Game.Mask();
 
         Raylib.UpdateMusicStream(_menuMusic);
-    }
-
-    private void DrawCirclePulse(float t)
-    {
-        t = Easings.OutQuad(t);
-        Rectangle src = Resources.Sprites["circle_soft"].Rect();
-        Rectangle dst = new Rectangle(360, 360, new Vector2(820, 820) * t);
-        Raylib.DrawTexturePro(
-            Resources.Sprites["circle_soft"], 
-            src, 
-            dst, 
-            dst.Size/2, 
-            0, 
-            new Color(255, 255, 255, (int)float.Lerp(224, 0, t)));
     }
 }

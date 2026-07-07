@@ -31,6 +31,8 @@ public abstract class AnimCurve<T>
     
     public abstract T Sample(float time);
 
+    public bool IsComplete(float time) => time - StartTime > Duration;
+
     protected float Progress(float time)
     {
         if (Duration == 0) return 1f;

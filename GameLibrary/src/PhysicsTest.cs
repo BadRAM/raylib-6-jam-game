@@ -21,7 +21,9 @@ public class PhysicsTest
     float timeStep = 1.0f / 60.0f;
     int subStepCount = 4;
     
-    private List<B2BodyId> _balls = new List<B2BodyId>();
+    private List<Ball> _balls = new List<Ball>();
+    private List<Ball> _ballsToDestroy = new List<Ball>();
+    private List<Color> _colors = new List<Color>() { Color.Red, Color.Yellow, Color.DarkBlue, Color.SkyBlue };
     
     public PhysicsTest()
     {
@@ -29,36 +31,38 @@ public class PhysicsTest
         
         B2WorldDef worldDef = b2DefaultWorldDef();
         
-        worldDef.gravity = new B2Vec2(0.0f, 500.0f);
+        worldDef.gravity = new B2Vec2(0.0f, 0.0f);
         WorldId = b2CreateWorld(worldDef);
 
-        for (int i = 0; i < 360; i+=2)
-        {
-            B2BodyDef groundBodyDef = b2DefaultBodyDef();
-            groundBodyDef.position = (Utils.AngleLength(i, 312f) + new Vector2(360, 360)).ToB2();
-            groundBodyDef.rotation = b2MakeRot(-i * (MathF.PI / 180f));
-        
-            B2BodyId groundId = b2CreateBody(WorldId, groundBodyDef);
-        
-            B2Polygon groundBox = b2MakeBox(16.0f, 4.0f);
-        
-            B2ShapeDef groundShapeDef = b2DefaultShapeDef();
-            b2CreatePolygonShape(groundId, groundShapeDef, groundBox);
-        }
+        // for (int i = 0; i < 360; i+=2)
+        // {
+        //     B2BodyDef groundBodyDef = b2DefaultBodyDef();
+        //     groundBodyDef.position = (Utils.AngleLength(i, 312f) + new Vector2(360, 360)).ToB2();
+        //     groundBodyDef.rotation = b2MakeRot(-i * (MathF.PI / 180f));
+        //
+        //     B2BodyId groundId = b2CreateBody(WorldId, groundBodyDef);
+        //
+        //     B2Polygon groundBox = b2MakeBox(16.0f, 4.0f);
+        //
+        //     B2ShapeDef groundShapeDef = b2DefaultShapeDef();
+        //     b2CreatePolygonShape(groundId, groundShapeDef, groundBox);
+        // }
     }
     
     public void Step()
     {
-        if (Raylib.IsMouseButtonPressed(0) || Raylib.IsKeyDown(KeyboardKey.Space))
+        if (Time.Frame % 10 == 0 || Raylib.IsKeyDown(KeyboardKey.L))
         {
             B2BodyDef bodyDef = b2DefaultBodyDef();
             bodyDef.type  = B2BodyType.b2_dynamicBody;
-            bodyDef.position = new B2Vec2(0, 4);
+            // bodyDef.position = (Vector2.Normalize(Utils.RandomInsideUnitCircle(Random.Shared)) * 4 + new Vector2(36f, 36f)).ToB2();
+            bodyDef.position = new B2Vec2(0, 0);
+            bodyDef.linearDamping = 0.05f;
             B2BodyId bodyId = b2CreateBody(WorldId, bodyDef);
         
             B2Circle dynamicCircle;
-            dynamicCircle.center = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), Game.GetActiveCamera()).ToB2();
-            dynamicCircle.radius = 14;
+            dynamicCircle.center = (Vector2.Normalize(Utils.RandomInsideUnitCircle(Random.Shared)) * 32f + new Vector2(36, 36)).ToB2();
+            dynamicCircle.radius = 1.4f;
         
             B2ShapeDef shapeDef = b2DefaultShapeDef();
             shapeDef.density = 1.0f;
@@ -66,20 +70,58 @@ public class PhysicsTest
             shapeDef.material.restitution = 0.75f;
         
             b2CreateCircleShape(bodyId, shapeDef, dynamicCircle);
-            _balls.Add(bodyId);
+            _balls.Add(new Ball(bodyId, _colors.PickRandom()));
         }
         
         b2World_Step(WorldId, timeStep, subStepCount);
         
-        foreach (B2BodyId ball in _balls)
+        foreach (Ball ball in _balls)
         {
-            B2Vec2 pos = b2Body_GetWorldCenterOfMass(ball);
-            float rot = b2Rot_GetAngle(b2Body_GetRotation(ball)) * 180 / MathF.PI;
-            Raylib.DrawTexturePro(_ballTex, new Rectangle(0, 0, _ballTex.Dimensions), new Rectangle(pos.ToVec2(), _ballTex.Dimensions/2), _ballTex.Dimensions/4, rot, Color.LightGray);
+            B2Vec2 pos = b2Body_GetWorldCenterOfMass(ball.Body);
+            if (Raylib.IsMouseButtonPressed(MouseButton.Left) && Raylib.CheckCollisionPointCircle(Raylib.GetMousePosition(), pos.ToVec2() * 10, 14))
+            {
+                _ballsToDestroy.AddRange(MergeBalls(ball));
+            }
+            float rot = b2Rot_GetAngle(b2Body_GetRotation(ball.Body)) * 180 / MathF.PI;
+            Vector2 delta = new Vector2(36f, 36f) - pos.ToVec2();
+            Vector2 g = Vector2.Normalize(delta) * 100;
+            b2Body_ApplyForce(ball.Body, g.ToB2(), pos, true);
+            Raylib.DrawTexturePro(_ballTex, new Rectangle(0, 0, _ballTex.Dimensions), new Rectangle(pos.ToVec2() * 10, _ballTex.Dimensions/2), _ballTex.Dimensions/4, rot, ball.Color);
         }
+
+        foreach (Ball ball in _ballsToDestroy)
+        {
+            b2DestroyBody(ball.Body);
+            _balls.Remove(ball);
+        }
+        _ballsToDestroy.Clear();
         
         if (Raylib.IsKeyDown(KeyboardKey.V))
             b2World_Draw(WorldId, _debugDraw);
+    }
+
+    private List<Ball> MergeBalls(Ball origin)
+    {
+        List<Ball> ballsToMerge = new List<Ball>();
+        List<Ball> ballsToCheck = new List<Ball>() {origin};
+        
+        while (ballsToCheck.Count > 0)
+        {
+            Vector2 pos = b2Body_GetWorldCenterOfMass(ballsToCheck[0].Body).ToVec2();
+            foreach (Ball ball in _balls)
+            {
+                if (ball.Color.Compare(ballsToCheck[0].Color) &&
+                    !ballsToMerge.Contains(ball) &&
+                    Raylib.CheckCollisionCircles(b2Body_GetWorldCenterOfMass(ball.Body).ToVec2(), 1.5f, pos, 1.5f))
+                {
+                    ballsToMerge.Add(ball);
+                    ballsToCheck.Add(ball);
+                }
+            }
+            ballsToCheck.RemoveAt(0);
+        }
+
+        return ballsToMerge;
     }
     
     public void Destroy()
@@ -185,5 +227,17 @@ public class PhysicsTest
             Vector2 p = point.ToVec2();
             Raylib.DrawText(s, (int)p.X, (int)p.Y, 4, color.ToRaylib());
         }
+    }
+}
+
+public class Ball
+{
+    public B2BodyId Body;
+    public Color Color;
+
+    public Ball(B2BodyId body, Color color)
+    {
+        Body = body;
+        Color = color;
     }
 }

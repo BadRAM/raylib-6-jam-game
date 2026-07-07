@@ -46,4 +46,18 @@ public static class Utils
         random ??= Random.Shared;
         return list[random.Next(list.Count)];
     }
+    
+    public static Vector2 RandomInsideUnitCircle(this Random random)
+    {
+        float theta = random.NextSingle() * 2 * Single.Pi;
+        return new Vector2(MathF.Cos(theta), MathF.Sin(theta)) * MathF.Sqrt(random.NextSingle());
+    }
+
+    public static bool Compare(this Color c1, Color c2)
+    {
+        return c1.R == c2.R &&
+               c1.G == c2.G &&
+               c1.B == c2.B &&
+               c1.A == c2.A;
+    }
 }

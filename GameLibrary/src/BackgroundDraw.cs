@@ -84,4 +84,18 @@ public static class BackgroundDraw
         Raylib.DrawLine(360, 0, 360, 720, Color.Black);
         Raylib.DrawLine(0, 360, 720, 360, Color.Black);
     }
+    
+    public static void CirclePulse(float t)
+    {
+        t = Easings.OutQuad(t);
+        Rectangle src = Resources.Sprites["circle_soft"].Rect();
+        Rectangle dst = new Rectangle(360, 360, new Vector2(820, 820) * t);
+        Raylib.DrawTexturePro(
+            Resources.Sprites["circle_soft"], 
+            src, 
+            dst, 
+            dst.Size/2, 
+            0, 
+            new Color(255, 255, 255, (int)float.Lerp(224, 0, t)));
+    }
 }

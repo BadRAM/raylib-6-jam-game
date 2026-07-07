@@ -13,7 +13,7 @@ public static class Game
     public static bool HoverInteractable;
     public static bool DebugMode;
     public static List<MusicAsset> Playlist;
-    public static MusicAsset MusicPlaying;
+    public static MusicAsset? MusicPlaying;
 
     // Target Resolution: 720x720
     private static Camera2D _defaultCamera = new Camera2D(new Vector2(0, 0), Vector2.Zero, 0, 1);
@@ -45,14 +45,13 @@ public static class Game
         Assets.Load();
         _screenShader = Resources.Shaders["screen_fragment"];
         _screenShaderMaskLocation = Raylib.GetShaderLocation(_screenShader, "mask");
-        ShuffleMusic(Assets.Musics.Values.ToList());
         
-        ActiveScene = new MainMenu();
+        ActiveScene = new IntroScene();
         
-        ScrollText("SCROLLING TEXT, ON A CIRCLE. ONLY POSSIBLE IN RAYLIB THROUGH BADRAM'S MAD SKILLS.");
-        ScrollText("DID YOU THINK I WAS DONE? I'VE ONLY BEGUN TO SCROLL MY TEXT!");
-        ScrollText("I'M A TEXT SCROLLING MACHINE!");
-        ScrollText("TEXT SCROLLS WILL RETURN.");
+        // ScrollText("SCROLLING TEXT, ON A CIRCLE. ONLY POSSIBLE IN RAYLIB THROUGH BADRAM'S MAD SKILLS.");
+        // ScrollText("DID YOU THINK I WAS DONE? I'VE ONLY BEGUN TO SCROLL MY TEXT!");
+        // ScrollText("I'M A TEXT SCROLLING MACHINE!");
+        // ScrollText("TEXT SCROLLS WILL RETURN.");
     }
     
     public static void Update()
@@ -62,33 +61,34 @@ public static class Game
         if (Raylib.IsKeyPressed(KeyboardKey.F3)) DebugMode = !DebugMode;
 
         HoverInteractable = false;
-        if (!Raylib.CheckCollisionPointCircle(Raylib.GetMousePosition(), new Vector2(360, 360), 360))
-        {
-            // :'(
-            // Raylib.SetWindowState(ConfigFlags.MousePassthroughWindow);
-        }
-        else
-        {
-            if (!Raylib.CheckCollisionPointCircle(Raylib.GetMousePosition(), new Vector2(360, 360), 310))
-            {
-                HoverInteractable = true;
-                if (Raylib.IsMouseButtonDown(MouseButton.Left))
-                {
-                    _lastWindowDelta = Raylib.GetMouseDelta() + _lastWindowDelta;
-                    Vector2 winPos = Raylib.GetWindowPosition() + _lastWindowDelta;
-                    Raylib.SetWindowPosition((int)winPos.X, (int)winPos.Y);
-                }
-            }
-        }
+        // if (!Raylib.CheckCollisionPointCircle(Raylib.GetMousePosition(), new Vector2(360, 360), 360))
+        // {
+        //     // :'(
+        //     // Raylib.SetWindowState(ConfigFlags.MousePassthroughWindow);
+        // }
+        // else
+        // {
+        //     if (!Raylib.CheckCollisionPointCircle(Raylib.GetMousePosition(), new Vector2(360, 360), 310))
+        //     {
+        //         HoverInteractable = true;
+        //         if (Raylib.IsMouseButtonDown(MouseButton.Left))
+        //         {
+        //             _lastWindowDelta = Raylib.GetMouseDelta() + _lastWindowDelta;
+        //             Vector2 winPos = Raylib.GetWindowPosition() + _lastWindowDelta;
+        //             Raylib.SetWindowPosition((int)winPos.X, (int)winPos.Y);
+        //         }
+        //     }
+        // }
 
-        if (!Raylib.IsMusicStreamPlaying(MusicPlaying.Music))
+        MusicPlaying?.Update();
+        if (MusicPlaying != null && !Raylib.IsMusicStreamPlaying(MusicPlaying.Music))
         {
             ShuffleMusic(Playlist);
         }
-        MusicPlaying.Update();
         
         Raylib.BeginDrawing();
         Raylib.ClearBackground(Color.Blank);
+        Raylib.DrawTexturePro(Resources.Sprites["fakebanner"], Resources.Sprites["fakebanner"].Rect(), new Rectangle(360, 360, Resources.Sprites["fakebanner"].Size()), Resources.Sprites["fakebanner"].Size()/2, 0, Color.White);
         Raylib.BeginTextureMode(_renderTexture);
         Raylib.ClearBackground(Color.Blank);
         SetCamera();
@@ -110,6 +110,7 @@ public static class Game
         
         while (LateActions.Count > 0) LateActions.Dequeue().Invoke();
         
+        Mask();
         Raylib.EndMode2D();
         Raylib.EndTextureMode();
         _activeCamera = _defaultCamera;
@@ -128,10 +129,12 @@ public static class Game
             Raylib.DrawTextureRec(_renderTexture.Texture, new Rectangle(0, 0, 720, -720), Vector2.Zero, Color.White);
         }
         
-        // DrawRing(Raylib.GetMousePosition().Y, Raylib.GetMousePosition().X / 720f);
         DrawRing(Time.Scaled * 2, MathF.Sin(Time.Scaled / 2f) / 2f + 0.5f);
 
-        Mask();
+        Raylib.BeginBlendMode(BlendMode.CustomSeparate);
+        Rlgl.SetBlendFactorsSeparate(Rlgl.ZERO, Rlgl.ONE, Rlgl.ONE, Rlgl.ZERO, Rlgl.FUNC_ADD, Rlgl.FUNC_ADD);
+        Raylib.DrawRectangle(0, 0, 720, 720, Color.White);
+        Raylib.EndBlendMode();
         
         Raylib.EndMode2D();
         
@@ -171,6 +174,7 @@ public static class Game
         Raylib.BeginBlendMode(BlendMode.CustomSeparate);
         Rlgl.SetBlendFactorsSeparate(Rlgl.ZERO, Rlgl.ONE, Rlgl.ONE, Rlgl.ZERO, Rlgl.FUNC_ADD, Rlgl.FUNC_ADD);
         Raylib.DrawTexture(Resources.Sprites["mask"], 0, 0, Color.White);
+        // Raylib.DrawRectangle(0, 0, 720, 720, Color.White);
         Raylib.EndBlendMode();
     }
     
@@ -203,7 +207,7 @@ public static class Game
     {
         Playlist = music;
         music = new List<MusicAsset>(Playlist); // clone list so we can modify it without breaking referenced static lists.
-        music.Remove(MusicPlaying); // Prevent shuffle from picking the song that was already playing.
+        if (MusicPlaying != null) music.Remove(MusicPlaying); // Prevent shuffle from picking the song that was already playing.
 
         if (music.Count == 0) return;
         
