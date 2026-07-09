@@ -115,7 +115,7 @@ public static class Game
         Raylib.EndTextureMode();
         _activeCamera = _defaultCamera;
 
-        Raylib.BeginMode2D(_deviceCameraAnim.Sample(Time.Scaled));
+        Raylib.BeginMode2D(_deviceCameraAnim.Sample());
         
         if (!DebugMode)
         {
@@ -147,7 +147,7 @@ public static class Game
     {
         _deviceCameraAnim = new AnimCamera
         (
-            _deviceCameraAnim.Sample(Time.Scaled),
+            _deviceCameraAnim.Sample(),
             new Camera2D(center, new Vector2(360, 360), 0, zoom), 
             duration, 
             easing ?? Easings.OutQuint
@@ -185,6 +185,12 @@ public static class Game
         {
             _scrollerAngle = ImGui.MeasureTextAngle(280, _scrollerTexts[0]) / 2 + 80;
         }
+    }
+    
+    public static Vector2 GetDevicePos()
+    {
+        Camera2D cam = _deviceCameraAnim.Sample();
+        return cam.Offset;
     }
     
     public static void SetCamera(Camera2D? camera = null)

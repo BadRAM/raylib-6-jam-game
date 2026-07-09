@@ -10,7 +10,7 @@ public class IntroScene : Scene
     
     public IntroScene()
     {
-        Game.MoveDevice(new Vector2(360, 120), 0.25f, 0);
+        Game.MoveDevice(new Vector2(464, 110), 0.15f, 0);
     }
     
     public override void Update()
@@ -26,8 +26,9 @@ public class IntroScene : Scene
         {
             foreach (AnimFloat pulse in _pulses)
             {
-                BackgroundDraw.CirclePulse(pulse.Sample(Time.Scaled));
+                BackgroundDraw.CirclePulse(pulse.Sample());
             }
+            _pulses.RemoveAll(p => p.IsComplete());
             
             if (Raylib.CheckCollisionPointRec(Raylib.GetMousePosition(), new Rectangle(287, 410, 146, 50)))
             {
@@ -37,7 +38,7 @@ public class IntroScene : Scene
                     Throb();
                 }
             }
-            if (Raylib.CheckCollisionPointCircle(Raylib.GetMousePosition(), new Vector2(360, 120), 90))
+            if (Raylib.CheckCollisionPointCircle(Raylib.GetMousePosition(), Game.GetDevicePos(), 360f * 0.15f))
             {
                 Game.HoverInteractable = true;
                 if (Raylib.IsMouseButtonPressed(MouseButton.Left))

@@ -20,14 +20,15 @@ public static class ImGui
         Raylib.SetTextureFilter(_defaultFont.Texture, TextureFilter.Bilinear);
     }
 
-    public static void DrawText(string text, Vector2 position, int size = 20)
+    public static void DrawText(string text, Vector2 position, int size = 20, Color? color = null)
     {
-        Raylib.DrawTextEx(_defaultFont, text, position, size, 1, Color.White);
+        color ??= Color.White;
+        Raylib.DrawTextEx(_defaultFont, text, position, size, 1, color.Value);
     }
 
-    public static void DrawText(string text, int x, int y, int size = 20)
+    public static void DrawText(string text, int x, int y, int size = 20, Color? color = null)
     {
-        DrawText(text, new Vector2(x, y), size);
+        DrawText(text, new Vector2(x, y), size, color);
     }
 
     public static void DrawTextRadial(float angle, float radius, string text, float maxArc = 180)

@@ -30,8 +30,10 @@ public abstract class AnimCurve<T>
     }
     
     public abstract T Sample(float time);
+    public T Sample() => Sample(Time.Scaled);
 
     public bool IsComplete(float time) => time - StartTime > Duration;
+    public bool IsComplete() => IsComplete(Time.Scaled);
 
     protected float Progress(float time)
     {

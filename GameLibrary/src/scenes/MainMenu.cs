@@ -6,14 +6,12 @@ namespace GameLibrary;
 public class MainMenu : Scene
 {
     private Music _menuMusic = Resources.Musics["null_function"];
-    private PhysicsTest _physicsTest;
     
     private List<Font> _testFonts = new List<Font>();
     
     public MainMenu()
     {
         Game.ShuffleMusic(Assets.Musics.Values.ToList());
-        _physicsTest = new PhysicsTest();
     }
     
     public override void Update()
@@ -23,6 +21,7 @@ public class MainMenu : Scene
         if (Raylib.IsKeyPressed(KeyboardKey.Three)) Game.MoveDevice(new Vector2( 90, 630), 0.25f, 1);
         if (Raylib.IsKeyPressed(KeyboardKey.Four )) Game.MoveDevice(new Vector2(180, 540), 0.5f,  1);
         if (Raylib.IsKeyPressed(KeyboardKey.Five )) Game.MoveDevice(new Vector2(240, 480), 0.66f,  1);
+        if (Raylib.IsKeyPressed(KeyboardKey.G    )) Game.ActiveScene = new GameScene();
         
         
         Raylib.ClearBackground(Color.DarkBlue);
@@ -33,33 +32,16 @@ public class MainMenu : Scene
         
         BackgroundDraw.CirclePulse(Math.Max(0, Game.MusicPlaying.Beat() / 4 - 0.5f) % 1);
         BackgroundDraw.CirclePulse(Math.Max(0, Game.MusicPlaying.Beat() / 4 - 0.0f) % 1);
-        ImGui.DrawTextRadial(0, 160, "beat: " + Game.MusicPlaying.Beat().ToString("N2"));
-        
         BackgroundDraw.Waveform2();
         
-        _physicsTest.Step();
+        Texture2D logo = Resources.Sprites["logo"];
+        Raylib.DrawTexturePro(logo, logo.Rect(), new Rectangle(360, 360, logo.Size()/2), logo.Size()/4, Time.Scaled * 60, Color.White);
         
-        Camera2D spin = new Camera2D();
-        spin.Target = new Vector2(360, 360);
-        spin.Offset = spin.Target;
-        spin.Rotation = Time.Scaled * 60;
-        spin.Zoom = 1;
-        Game.SetCamera(spin);
-        // Raylib.DrawTextureEx(Resources.Sprites["logo"], new Vector2(270, 270), 0, 0.5f, Color.White);
-        Game.SetCamera();
+        if (Raylib.IsKeyPressed(KeyboardKey.N))
+        {
+            Game.ShuffleMusic(Assets.Musics.Values.ToList());
+        }
         
-        // if (Raylib.CheckCollisionPointCircle(Raylib.GetMousePosition(), new Vector2(360, 360), 90))
-        // {
-        //     Game.HoverInteractable = true;
-        //     if (Raylib.IsMouseButtonPressed(MouseButton.Left))
-        //     {
-        //         // Sound sound = Resources.Sounds["metronome"];
-        //         // Raylib.SetSoundVolume(sound, 0.5f);
-        //         // Raylib.PlaySound(sound);
-        //         Game.ShuffleMusic(Assets.Musics.Values.ToList());
-        //     }
-        // }
-
         if (Game.DebugMode)
         {
             if (Game.MusicPlaying.IsBeatThisFrame())
