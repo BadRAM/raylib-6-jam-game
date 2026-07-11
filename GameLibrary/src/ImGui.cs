@@ -1,13 +1,16 @@
+using System.Drawing;
 using System.Numerics;
 using Raylib_cs;
+using Color = Raylib_cs.Color;
+using Rectangle = Raylib_cs.Rectangle;
 
 namespace GameLibrary;
 
 // Immediate mode GUI functions, similar to raygui.
 public static class ImGui
 {
-    private static Sound _buttonPress;
-    private static Sound _buttonRelease;
+    private static SoundResource _buttonPress;
+    private static SoundResource _buttonRelease;
     private static Font _defaultFont;
     private static int _defaultFontSize = 40;
     private static int _defaultTextSpacing = 3;
@@ -30,9 +33,24 @@ public static class ImGui
     {
         DrawText(text, new Vector2(x, y), size, color);
     }
-
-    public static void DrawTextRadial(float angle, float radius, string text, float maxArc = 180)
+    
+    public static void DrawTextCentered(string text, Vector2 position, int size = 20, Color? color = null)
     {
+        color ??= Color.White;
+        Vector2 bounds = Raylib.MeasureTextEx(_defaultFont, text, size, _defaultTextSpacing);
+        Raylib.DrawTextEx(_defaultFont, text, position - bounds/2, size, 1, color.Value);
+    }
+
+    public static void DrawTextCentered(string text, int x, int y, int size = 20, Color? color = null)
+    {
+        color ??= Color.White;
+        Vector2 bounds = Raylib.MeasureTextEx(_defaultFont, text, size, _defaultTextSpacing);
+        Raylib.DrawTextEx(_defaultFont, text, new Vector2(x, y) - bounds/2, size, 1, color.Value);
+    }
+    
+    public static void DrawTextRadial(float angle, float radius, string text, float maxArc = 180, Color? color = null)
+    {
+        color ??= Color.White;
         Vector2 size = Raylib.MeasureTextEx(_defaultFont, text, _defaultFontSize, _defaultTextSpacing);
         Camera2D spin = new Camera2D
         {
@@ -51,7 +69,7 @@ public static class ImGui
             if (spin.Rotation < maxArc/2 && spin.Rotation > -maxArc/2)
             {
                 Game.SetCamera(spin);
-                Raylib.DrawTextCodepoint(_defaultFont, character[0], new Vector2(-width/2, radius - size.Y/2), _defaultFontSize, Color.White);
+                Raylib.DrawTextCodepoint(_defaultFont, character[0], new Vector2(-width/2, radius - size.Y/2), _defaultFontSize, color.Value);
             }
             spin.Rotation -= rotateBy / 2;
         }
@@ -71,14 +89,14 @@ public static class ImGui
         bool pressed = hovered && Raylib.IsMouseButtonDown(MouseButton.Left);
         Color color = hovered ? (pressed ? Color.DarkGray : Color.LightGray) : Color.Gray;
         
-        if (hovered && Raylib.IsMouseButtonPressed(MouseButton.Left)) Raylib.PlaySound(_buttonPress);
+        if (hovered && Raylib.IsMouseButtonPressed(MouseButton.Left)) _buttonPress.Play();
         
         Raylib.DrawRectangleRec(rect, color);
         DrawText(label, x + 5, y + 5);
 
         if (hovered && Raylib.IsMouseButtonReleased(MouseButton.Left))
         {
-            Raylib.PlaySound(_buttonRelease);
+            _buttonRelease.Play();
             return true;
         }
 

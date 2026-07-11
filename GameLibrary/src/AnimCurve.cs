@@ -3,98 +3,86 @@ using Raylib_cs;
 
 namespace GameLibrary;
 
-public abstract class AnimCurve<T>
+public class AnimCurve<T>
 {
     public T Start;
     public T End;
     public float Duration;
     public Func<float, float> Easing;
+    public Func<T, T, float, T> Lerp;
     public float StartTime;
-    
-    protected AnimCurve(T start, T end, float duration, Func<float, float>? easing = null, float? startTime = null)
-    {
-        Start = start;
-        End = end;
-        Duration = duration;
-        Easing = easing ?? Easings.Linear;
-        StartTime = startTime ?? Time.Scaled;
-    }
 
-    protected AnimCurve(T end)
+    // This AnimCurve is a placeholder that always returns the endpoint.
+    // Useful for initializing things that will be animated later.
+    // To make a working AnimCurve, use one of the static factory methods.
+    public AnimCurve(T end)
     {
         Start = end;
         End = end;
         Duration = 0;
-        Easing = Easings.Linear;
+        Easing = _ => 1f;
+        Lerp = (_, e, _) => e;
         StartTime = 0;
     }
     
-    public abstract T Sample(float time);
+    // This constructor is not designed for convenience. When possible, use the static factory methods instead.
+    public AnimCurve(T start, T end, float? startTime, float duration, Func<float, float>? easing, Func<T, T, float, T> lerp)
+    {
+        Start = start;
+        End = end;
+        StartTime = startTime ?? Time.Scaled;
+        Duration = duration;
+        Easing = easing ?? Easings.Linear;
+        Lerp = lerp;
+    }
+    
+    // Core functionality
+    public T Sample(float time) => Lerp.Invoke(Start, End, Progress(time));
     public T Sample() => Sample(Time.Scaled);
+    
+    public float Progress(float time) => (Duration == 0) ? 1f : Easing.Invoke(Math.Clamp((time - StartTime) / Duration, 0, 1));
+    public float Progress() => Progress(Time.Scaled);
 
+    public float ProgressUnEased(float time) => (Duration == 0) ? 1f : Math.Clamp((time - StartTime) / Duration, 0, 1);
+    public float ProgressUnEased() => ProgressUnEased(Time.Scaled);
+    
     public bool IsComplete(float time) => time - StartTime > Duration;
     public bool IsComplete() => IsComplete(Time.Scaled);
-
-    protected float Progress(float time)
-    {
-        if (Duration == 0) return 1f;
-        return Easing.Invoke(Math.Clamp((time - StartTime) / Duration, 0, 1));
-    }
 }
 
-public class AnimFloat : AnimCurve<float>
+// Static factory methods
+public static class AnimCurve
 {
-    public AnimFloat(float start, float end, float duration, Func<float, float>? easing = null, float? startTime = null) : base(start, end, duration, easing, startTime) { }
-    public AnimFloat(float end) : base(end) { }
+    public static AnimCurve<float> NewFloat(float start, float end, float duration, Func<float, float>? easing = null, float? startTime = null) 
+        => new AnimCurve<float>(start, end, startTime, duration, easing, float.Lerp);
+    
+    public static AnimCurve<Vector2> NewVector2(Vector2 start, Vector2 end, float duration, Func<float, float>? easing = null, float? startTime = null) 
+        => new AnimCurve<Vector2>(start, end, startTime, duration, easing, Vector2.Lerp);
+    
+    public static AnimCurve<Rectangle> NewRectangle(Rectangle start, Rectangle end, float duration, Func<float, float>? easing = null, float? startTime = null) 
+        => new AnimCurve<Rectangle>(start, end, startTime, duration, easing, LerpRectangle);
+    
+    public static AnimCurve<Camera2D> NewCamera2D(Camera2D start, Camera2D end, float duration, Func<float, float>? easing = null, float? startTime = null) 
+        => new AnimCurve<Camera2D>(start, end, startTime, duration, easing, LerpCamera2D);
 
-    public override float Sample(float time)
+    private static Rectangle LerpRectangle(Rectangle a, Rectangle b, float t)
     {
-        return float.Lerp(Start, End, Progress(time));
-    }
-}
-
-public class AnimVector2 : AnimCurve<Vector2>
-{
-    public AnimVector2(Vector2 start, Vector2 end, float duration, Func<float, float>? easing = null, float? startTime = null) : base(start, end, duration, easing, startTime) { }
-    public AnimVector2(Vector2 end) : base(end) { }
-
-    public override Vector2 Sample(float time)
-    {
-        return Vector2.Lerp(Start, End, Progress(time));
-    }
-}
-
-public class AnimCamera : AnimCurve<Camera2D>
-{
-    public AnimCamera(Camera2D start, Camera2D end, float duration, Func<float, float>? easing = null, float? startTime = null) : base(start, end, duration, easing, startTime) { }
-    public AnimCamera(Camera2D end) : base(end) { }
-
-    public override Camera2D Sample(float time)
-    {
-        float t = Progress(time);
-        Camera2D result = new Camera2D()
+        Rectangle result = new Rectangle()
         {
-            Target = Vector2.Lerp(Start.Target, End.Target, t),
-            Offset = Vector2.Lerp(Start.Offset, End.Offset, t),
-            Rotation = float.Lerp(Start.Rotation, End.Rotation, t),
-            Zoom = float.Lerp(Start.Zoom, End.Zoom, t),
+            Position = Vector2.Lerp(a.Position, b.Position, t),
+            Size = Vector2.Lerp(a.Size, b.Size, t),
         };
         return result;
     }
-}
-
-public class AnimRect : AnimCurve<Rectangle>
-{
-    public AnimRect(Rectangle start, Rectangle end, float duration, Func<float, float>? easing = null, float? startTime = null) : base(start, end, duration, easing, startTime) { }
-    public AnimRect(Rectangle end) : base(end) { }
-
-    public override Rectangle Sample(float time)
+    
+    private static Camera2D LerpCamera2D(Camera2D a, Camera2D b, float t)
     {
-        float t = Progress(time);
-        Rectangle result = new Rectangle()
+        Camera2D result = new Camera2D()
         {
-            Position = Vector2.Lerp(Start.Position, End.Position, t),
-            Size = Vector2.Lerp(Start.Size, End.Size, t),
+            Target = Vector2.Lerp(a.Target, b.Target, t),
+            Offset = Vector2.Lerp(a.Offset, b.Offset, t),
+            Rotation = float.Lerp(a.Rotation, b.Rotation, t),
+            Zoom = float.Lerp(a.Zoom, b.Zoom, t),
         };
         return result;
     }

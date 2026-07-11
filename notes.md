@@ -1,17 +1,16 @@
 Raylib Jam
 
+a9b3ea
+
 Stack:
- - Balls Colliding
- - Orb sprite
-   - Color Wipe
- - Gameplay
- - Gameplay playtest
- - Charge gauge
+ - Ball Drain animation
  - Radial menu
  - Cleanup, sensible scene system and device/scene distinction. (Gamescene vs Devicescene?)
  - Intro 'cutscene'
  - Portal effect
  - Storyline integration
+ - Ball merge animation
+ - Overfill animation
  - Flipover animation
 
 Requirements:
@@ -41,7 +40,10 @@ Monster Ideas:
  - 
 
 Websites:
-All sourced from https://geocities.restorativland.org/
+With permission:
+https://leafyyy.neocities.org/
+
+the rest all sourced from https://geocities.restorativland.org/
 https://geocities.restorativland.org/Heartland/Grove/1137/
  - Horse
 https://geocities.restorativland.org/Heartland/Ranch/1782/

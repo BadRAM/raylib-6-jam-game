@@ -24,15 +24,22 @@ public class GameScene : Scene
     int subStepCount = 4;
     
     private List<Ball> _balls = new List<Ball>();
-    private List<Ball> _ballsToDestroy = new List<Ball>();
-    private List<Color> _colors = new List<Color>() { Color.Red, Color.Yellow, Color.Purple, Color.SkyBlue };
     
     private int _score;
     private int _displayedScore;
-    private int _targetScore;
+    private int _targetScore = 20000;
     private int _combo;
     private float _lastClear;
     private List<ScoreAnim> _scoreAnims = new List<ScoreAnim>();
+    private AnimCurve<float> _drainAnim = new AnimCurve<float>(1);
+
+    private State _state = State.Gaming;
+    
+    enum State
+    {
+        Gaming,
+        Draining
+    }
     
     public GameScene()
     {
@@ -41,6 +48,7 @@ public class GameScene : Scene
         B2WorldDef worldDef = b2DefaultWorldDef();
         
         worldDef.gravity = new B2Vec2(0.0f, 0.0f);
+        worldDef.hitEventThreshold = 15f;
         WorldId = b2CreateWorld(worldDef);
     }
     
@@ -48,22 +56,41 @@ public class GameScene : Scene
     {
         Raylib.ClearBackground(Color.DarkBlue);
         
-        BackgroundDraw.Web();
+        {
+            Texture2D tex = Resources.Sprites["charge_meter"];
+            float height = 720 - (float)_displayedScore / _targetScore * 720;
+            Color col = Raylib.ColorAlpha(Color.SkyBlue, 128);
+            Raylib.DrawTexturePro(tex, tex.Rect(), new Rectangle(0, height, 720, 720), Vector2.Zero, 0, col);
+        }
+
+        if (_state == State.Draining)
+        {
+            BackgroundDraw.Web(1 - _drainAnim.Sample());
+            BackgroundDraw.Spiral(_drainAnim.Sample());
+        }
+        else
+        {
+            BackgroundDraw.Web();
+        }
+        
         
         if (Raylib.IsKeyDown(KeyboardKey.A)) Raylib.ClearBackground(new Color(32, 32, 32, 255));
         
         BackgroundDraw.CirclePulse(Math.Max(0, Game.MusicPlaying.Beat() / 4 - 0.5f) % 1);
         BackgroundDraw.CirclePulse(Math.Max(0, Game.MusicPlaying.Beat() / 4 - 0.0f) % 1);
         BackgroundDraw.Waveform2();
-        
-        if (Time.Frame % 10 == 0 || _balls.Count < 60 || Raylib.IsKeyDown(KeyboardKey.L))
+
+        int ballFreq = _combo >= 2 && _balls.Count < 200 ? 5 : 10;
+        if (_state == State.Gaming && (Time.Frame % ballFreq == 0 || _balls.Count < 60 || Raylib.IsKeyDown(KeyboardKey.L)))
         {
             Vector2 pos = Vector2.Normalize(Utils.RandomInsideUnitCircle(Random.Shared)) * 32f + new Vector2(36, 36);
             MakeBall(pos, Ball.RandomDefaultType());
         }
         
         b2World_Step(WorldId, timeStep, subStepCount);
-        
+
+        B2ContactEvents contactEvents = b2World_GetContactEvents(WorldId);
+
         foreach (Ball ball in _balls)
         {
             ball.Draw();
@@ -72,12 +99,120 @@ public class GameScene : Scene
             Vector2 g = Vector2.Normalize(delta) * 100;
             b2Body_ApplyForce(ball.Body, g.ToB2(), ball.Position.ToB2(), true);
         }
+        
+        for (var i = 0; i < contactEvents.hitCount; i++)
+        {
+            var contact = contactEvents.hitEvents[i];
+            // Raylib.DrawCircleV(contact.point.ToVec2() * 10, 3, new Color(255, 0, 0, 192));
+            float volume = 0.3f;
+            if      (contact.approachSpeed > 40) { Resources.Sounds["collision1"].PlayRandomPitch(1 - (contact.point.ToVec2().X / 72), 1f, 1f   * volume); }
+            else if (contact.approachSpeed > 35) { Resources.Sounds["collision2"].PlayRandomPitch(1 - (contact.point.ToVec2().X / 72), 1f, 0.9f * volume); }
+            else if (contact.approachSpeed > 30) { Resources.Sounds["collision3"].PlayRandomPitch(1 - (contact.point.ToVec2().X / 72), 1f, 0.8f * volume); }
+            else if (contact.approachSpeed > 25) { Resources.Sounds["collision4"].PlayRandomPitch(1 - (contact.point.ToVec2().X / 72), 1f, 0.7f * volume); }
+            else if (contact.approachSpeed > 20) { Resources.Sounds["collision5"].PlayRandomPitch(1 - (contact.point.ToVec2().X / 72), 1f, 0.6f * volume); }
+            else                                 { Resources.Sounds["collision6"].PlayRandomPitch(1 - (contact.point.ToVec2().X / 72), 1f, 0.5f * volume); }
+            // Console.WriteLine($"BALLS COLLIDING with speed:{contact.approachSpeed:N5} at: {contact.point.ToVec2()}");
+        }
 
+        if (_state == State.Gaming)
+        {
+            HandleInput();
+            
+            if (_combo > 1 && Time.Scaled - _lastClear > 3f)
+            {
+                EndCombo();
+            }
+        
+            if (_balls.Count > 350 && Time.Scaled % 1f < 0.5f)
+            {
+                Texture2D tex = Resources.Sprites["radial_inverted"];
+                Color col = new Color(255, 0, 0, _balls.Count - 300);
+                Raylib.DrawTexturePro(tex, tex.Rect(), new Rectangle(0, 0, 720, 720), Vector2.Zero, 0, col);
+                ImGui.DrawTextCentered("Overflow\nImminent", 360, 360, 40);
+            }
+        
+            if (_balls.Count > 400)
+            {
+                _score = 0;
+                Drain();
+                Game.ScrollText("Orb Overflow! Charge vented.");
+            }
+
+            if (_displayedScore >= _targetScore)
+            {
+                Drain();
+                _targetScore += 10000;
+                _displayedScore = _targetScore;
+            }
+        }
+        
+        if (_state == State.Draining)
+        {
+            if (_balls.Count == 0 && _drainAnim.IsComplete())
+            {
+                if (_drainAnim.Sample() == 0)
+                {
+                    _state = State.Gaming;
+                }
+                else
+                {
+                    _drainAnim = AnimCurve.NewFloat(1, 0, 0.5f, Easings.InQuad);
+                }
+            }
+
+            
+            float size = 200 * _drainAnim.Sample();
+            Texture2D tex = Resources.Sprites["mask"];
+            Raylib.DrawTexturePro(tex, tex.Rect(), new Rectangle(360, 360, Vector2.One * size), Vector2.One * size / 2, 0, Color.Black);
+            
+            List<Ball> ballsToRemove = new List<Ball>();
+            foreach (Ball ball in _balls)
+            {
+                if (Vector2.Distance(new Vector2(36, 36), ball.Position) < size / 20 - 1)
+                {
+                    ballsToRemove.Add(ball);
+                }
+            }
+            
+            foreach (Ball ball in ballsToRemove)
+            {
+                b2DestroyBody(ball.Body);
+                _balls.Remove(ball);
+            }
+        }
+        
+        foreach (ScoreAnim scoreAnim in _scoreAnims)
+        {
+            scoreAnim.Draw();
+        }
+
+        _scoreAnims.RemoveAll(s => s.IsComplete());
+
+        if (_displayedScore < _score - 6000) _displayedScore += 100;
+        if (_displayedScore > _score) _displayedScore -= 100;
+        if (_displayedScore < _score) _displayedScore += 10;
+        if (!Game.IsScrolling()) ImGui.DrawTextRadial(0, -280, $"Score: {_displayedScore}");
+        // ImGui.DrawTextRadial(0, -240, $"Balls: {_balls.Count}");
+        if (_combo > 1)
+        {
+            ImGui.DrawTextRadial(0, 280, $"{_combo}x Combo!");
+            int comboPercentage = (int)Math.Clamp((Time.Scaled - _lastClear) * 10f, 0, 29);
+            ImGui.DrawTextRadial(0, 240, "..............................".Substring(comboPercentage));
+        }
+        
+        if (Raylib.IsKeyDown(KeyboardKey.V))
+            b2World_Draw(WorldId, _debugDraw);
+    }
+
+    private void HandleInput()
+    {
         Ball? hoveredBall = GetBallUnderCursor(16);
+        List<Ball> ballsToMerge = new List<Ball>();
+        bool makeBomb = false;
 
         if (hoveredBall != null)
         {
-            List<Ball> mergeBalls = MergeBalls(hoveredBall, out bool isBomb);
+            List<Ball> mergeBalls = MergeBalls(hoveredBall, out makeBomb);
 
             if (Raylib.IsKeyPressed(KeyboardKey.B))
             {
@@ -92,27 +227,32 @@ public class GameScene : Scene
                     {
                         if (Raylib.CheckCollisionPointCircle(ball.Position, hoveredBall.Position, 12f))
                         {
-                            _ballsToDestroy.Add(ball);
+                            ballsToMerge.Add(ball);
                         }
                     }
                     
-                    // B2ExplosionDef explode = b2DefaultExplosionDef();
-                    // explode.position = hoveredBall.Position.ToB2();
-                    // explode.radius = 15;
-                    // explode.impulsePerLength = 75;
-                    //
-                    // b2World_Explode(WorldId, explode);
+                    B2ExplosionDef explode = b2DefaultExplosionDef();
+                    explode.position = hoveredBall.Position.ToB2();
+                    explode.radius = 15;
+                    explode.impulsePerLength = 75;
                     
-                    // _ballsToDestroy.Add(hoveredBall);
+                    b2World_Explode(WorldId, explode);
+                    
+                    Resources.Sounds["bomb"].Play();
                 }
             }
             else if (mergeBalls.Count < 4) {} // Don't clear normal groups less than 4
             else if (Raylib.IsMouseButtonPressed(MouseButton.Left))
             {
-                _ballsToDestroy.AddRange(mergeBalls);
-                if (isBomb)
+                ballsToMerge.AddRange(mergeBalls);
+                if (makeBomb)
                 {
-                    MakeBall(mergeBalls[0].Position, Ball.Type.Bomb);
+                    MakeBall(hoveredBall.Position, Ball.Type.Bomb);
+                }
+                
+                if (hoveredBall.BallType is Ball.Type.BlueCrystal or Ball.Type.YellowCrystal or Ball.Type.PurpleCrystal or Ball.Type.RedCrystal)
+                {
+                    Resources.Sounds["match_super"].Play();
                 }
             }
             else
@@ -128,57 +268,59 @@ public class GameScene : Scene
             }
         }
 
-        if (_ballsToDestroy.Count > 0)
+        if (ballsToMerge.Count > 0)
         {
             _lastClear = Time.Scaled;
-            if (hoveredBall?.BallType == Ball.Type.Bomb || _ballsToDestroy.Count > _combo)
-            {
-                _combo++;
-            }
+            if ((hoveredBall?.IsSpecial() ?? false) || makeBomb || ballsToMerge.Count > _combo)
+            { }
             else
             {
-                _combo = 1;
+                EndCombo();
             }
-            Raylib.PlaySound(Resources.Sounds[$"match{Math.Clamp(_combo, 1, 14)}"]);
-            int mergeScore = _ballsToDestroy.Count * _combo * 10;
+
+            _combo++;
+            Resources.Sounds[$"match{Math.Clamp(_combo, 1, 14)}"].Play();
+            int mergeScore = ballsToMerge.Count * _combo * 10;
             _score += mergeScore;
-            _scoreAnims.Add(new ScoreAnim($"{_ballsToDestroy.Count}0x{_combo} = {mergeScore}", Raylib.GetMousePosition(), new List<Ball>(_ballsToDestroy)));
+            _scoreAnims.Add(new ScoreAnim($"{ballsToMerge.Count}0x{_combo} = {mergeScore}", Raylib.GetMousePosition(), ballsToMerge));
         }
-
-        if (_combo > 1 && Time.Scaled - _lastClear > 3f)
-        {
-            _combo = 0;
-        }
-
-        foreach (Ball ball in _ballsToDestroy)
+        
+        foreach (Ball ball in ballsToMerge)
         {
             b2DestroyBody(ball.Body);
             _balls.Remove(ball);
         }
-        _ballsToDestroy.Clear();
-
-        foreach (ScoreAnim scoreAnim in _scoreAnims)
-        {
-            scoreAnim.Draw();
-        }
-
-        _scoreAnims.RemoveAll(s => s.IsComplete());
-
-        if (_displayedScore < _score - 6000) _displayedScore = _score - 6000;
-        if (_displayedScore < _score) _displayedScore += 10;
-        ImGui.DrawTextRadial(0, -280, $"Score: {_displayedScore}");
-        ImGui.DrawTextRadial(0, -240, $"Balls: {_balls.Count}");
-        if (_combo > 1)
-        {
-            ImGui.DrawTextRadial(0, 280, $"{_combo}x Combo!");
-            int comboPercentage = (int)Math.Clamp((Time.Scaled - _lastClear) * 10f, 0, 29);
-            ImGui.DrawTextRadial(0, 240, "..............................".Substring(comboPercentage));
-        }
-        
-        if (Raylib.IsKeyDown(KeyboardKey.V))
-            b2World_Draw(WorldId, _debugDraw);
     }
 
+    private void EndCombo()
+    {
+        if (_combo >= 8)
+        {
+            Resources.Sounds["combo_end_big"].Play();
+        }
+        else if (_combo >= 4)
+        {
+            Resources.Sounds["combo_end_small"].Play();
+        }
+        
+        while (_combo >= 8)
+        {
+            Vector2 pos = Vector2.Normalize(Utils.RandomInsideUnitCircle(Random.Shared)) * 32f + new Vector2(36, 36);
+            MakeBall(pos, new []{Ball.Type.BlueCrystal, Ball.Type.PurpleCrystal, Ball.Type.YellowCrystal, Ball.Type.RedCrystal}[Random.Shared.Next(4)]);
+            _combo -= 4;
+        }
+        
+        _combo = 0;
+    }
+
+    private void Drain()
+    {
+        EndCombo();
+        _score = 0;
+        _state = State.Draining;
+        _drainAnim = AnimCurve.NewFloat(0, 1, 2, Easings.OutQuad);
+    }
+    
     private Ball? GetBallUnderCursor(float maxDistance)
     {
         maxDistance /= 10;
@@ -196,12 +338,18 @@ public class GameScene : Scene
         return nearestBall.Key;
     }
     
-    private List<Ball> MergeBalls(Ball origin, out bool isBomb)
+    private List<Ball> MergeBalls(Ball origin, out bool makeBomb)
     {
+        makeBomb = false;
+        if (origin.BallType == Ball.Type.BlueCrystal)   return _balls.Where(b => b.BallType is Ball.Type.Blue   or Ball.Type.BlueCrystal  ).ToList();
+        if (origin.BallType == Ball.Type.YellowCrystal) return _balls.Where(b => b.BallType is Ball.Type.Yellow or Ball.Type.YellowCrystal).ToList();
+        if (origin.BallType == Ball.Type.PurpleCrystal) return _balls.Where(b => b.BallType is Ball.Type.Purple or Ball.Type.PurpleCrystal).ToList();
+        if (origin.BallType == Ball.Type.RedCrystal)    return _balls.Where(b => b.BallType is Ball.Type.Red    or Ball.Type.RedCrystal   ).ToList();
+        
         List<Ball> ballsToMerge = new List<Ball>();
         List<Ball> ballsToCheck = new List<Ball>() {origin};
         bool first = true;
-        isBomb = false;
+        makeBomb = false;
         
         while (ballsToCheck.Count > 0)
         {
@@ -219,7 +367,7 @@ public class GameScene : Scene
             ballsToCheck.RemoveAt(0);
             if (first && ballsToMerge.Count >= 7)
             {
-                isBomb = true;
+                makeBomb = true;
                 return ballsToMerge;
             }
 
@@ -247,6 +395,7 @@ public class GameScene : Scene
         dynamicCircle.radius = 1.4f;
         
         B2ShapeDef shapeDef = b2DefaultShapeDef();
+        shapeDef.enableHitEvents = true;
         shapeDef.density = 1.0f;
         shapeDef.material.friction = 0.3f;
         shapeDef.material.restitution = 0.75f;
@@ -272,7 +421,11 @@ public class GameScene : Scene
             Blue,
             Yellow,
             Purple,
-            Bomb
+            Bomb,
+            RedCrystal,
+            BlueCrystal,
+            YellowCrystal,
+            PurpleCrystal
         }
 
         public Ball(B2BodyId body, Type ballType)
@@ -280,45 +433,64 @@ public class GameScene : Scene
             Body = body;
             BallType = ballType;
         }
+        
+        public bool IsSpecial() => !(BallType is Type.Blue or Type.Purple or Type.Yellow or Type.Red);
 
         public void Draw()
         {
             Position = b2Body_GetWorldCenterOfMass(Body).ToVec2();
-            Texture2D tex = Resources.Sprites["graysan"];
+            Vector2 size = new Vector2(28, 28);
+            Texture2D baseTex = Resources.Sprites["orb_base"];
+            Texture2D? spinPattern = null;
+            Texture2D shineTex = Resources.Sprites["orb_shine"];
             Color col = Color.Pink;
             switch (BallType)
             {
                 case Type.Red:
-                    tex = Resources.Sprites["graysan"];
                     col = Color.Red;
                     break;
                 case Type.Blue:
-                    tex = Resources.Sprites["graysan"];
                     col = Color.SkyBlue;
                     break;
                 case Type.Yellow:
-                    tex = Resources.Sprites["graysan"];
                     col = Color.Yellow;
                     break;
                 case Type.Purple:
-                    tex = Resources.Sprites["graysan"];
                     col = Color.Purple;
                     break;
                 case Type.Bomb:
-                    tex = Resources.Sprites["graysan"];
                     col = Color.DarkGray;
+                    break;
+                case Type.BlueCrystal:
+                    spinPattern = Resources.Sprites["orb_spiral"];
+                    col = Color.SkyBlue;
+                    break;
+                case Type.PurpleCrystal:
+                    spinPattern = Resources.Sprites["orb_spiral"];
+                    col = Color.Purple;
+                    break;
+                case Type.RedCrystal:
+                    spinPattern = Resources.Sprites["orb_spiral"];
+                    col = Color.Red;
+                    break;
+                case Type.YellowCrystal:
+                    spinPattern = Resources.Sprites["orb_spiral"];
+                    col = Color.Yellow;
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
-            Raylib.DrawTexturePro(tex, tex.Rect(), new Rectangle(Position * 10, tex.Dimensions/2), tex.Dimensions/4, Rotation, col);
+            Raylib.DrawTexturePro(baseTex, baseTex.Rect(), new Rectangle(Position * 10, size), size/2, 0, col);
+            if (spinPattern != null) Raylib.DrawTexturePro(spinPattern.Value, spinPattern.Value.Rect(), new Rectangle(Position * 10, size), size/2, Rotation, col);
+            Raylib.DrawTexturePro(shineTex, shineTex.Rect(), new Rectangle(Position * 10, size), size/2, 0, Color.White);
         }
+
     }
     
     public class ScoreAnim
     {
         private string _text;
-        private AnimFloat _anim;
+        private AnimCurve<float> _anim;
         private Vector2 _pos;
         private List<Ball> _balls;
 
@@ -327,7 +499,7 @@ public class GameScene : Scene
             _text = text;
             _pos = pos;
             _balls = balls;
-            _anim = new AnimFloat(0, 1, 2);
+            _anim = AnimCurve.NewFloat(0, 1, 2);
         }
 
         public void Draw()

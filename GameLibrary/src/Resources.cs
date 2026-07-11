@@ -5,7 +5,7 @@ namespace GameLibrary;
 public static class Resources
 {
     public static Dictionary<string, Texture2D> Sprites = new Dictionary<string, Texture2D>();
-    public static Dictionary<string, Sound> Sounds = new Dictionary<string, Sound>();
+    public static Dictionary<string, SoundResource> Sounds = new Dictionary<string, SoundResource>();
     public static Dictionary<string, Music> Musics = new Dictionary<string, Music>();
     public static Dictionary<string, Font> Fonts = new Dictionary<string, Font>();
     public static Dictionary<string, Shader> Shaders = new Dictionary<string, Shader>();
@@ -28,7 +28,7 @@ public static class Resources
         
         foreach (string soundPath in Directory.GetFiles(Game.Dir + "sound/", "*", SearchOption.AllDirectories))
         {
-            Sounds.Add(Path.GetFileNameWithoutExtension(soundPath), Raylib.LoadSound(soundPath));
+            Sounds.Add(Path.GetFileNameWithoutExtension(soundPath), new SoundResource(soundPath));
             Console.WriteLine($"Sounds[{Path.GetFileNameWithoutExtension(soundPath)}]");
         }
         

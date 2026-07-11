@@ -65,7 +65,7 @@ public static class BackgroundDraw
         }
     }
 
-    public static void Web()
+    public static void Web(float alpha = 1f)
     {
         Raylib.DrawTexturePro(
             Resources.Sprites["radial"], 
@@ -73,7 +73,7 @@ public static class BackgroundDraw
             new Rectangle(0, 0, 720, 720), 
             Vector2.Zero, 
             0, 
-            Color.Black);
+            Raylib.ColorAlpha(Color.Black, alpha));
         for (int i = 0; i < 8; i++)
         {
             Raylib.DrawCircleLines(360, 360, 45 * i, Color.Black);
@@ -83,6 +83,19 @@ public static class BackgroundDraw
         Raylib.DrawLine(0, 720, 720, 0, Color.Black);
         Raylib.DrawLine(360, 0, 360, 720, Color.Black);
         Raylib.DrawLine(0, 360, 720, 360, Color.Black);
+    }
+
+    public static void Spiral(float alpha = 1f)
+    {
+        Texture2D tex = Resources.Sprites["spiral2"];
+        Raylib.DrawTexturePro(tex, tex.Rect(), new Rectangle(360, 360, 720, 720), new Vector2(360, 360), -Time.Scaled * 180, Raylib.ColorAlpha(Color.Black, alpha/2));
+        Raylib.DrawTexturePro(
+            Resources.Sprites["radial"], 
+            new Rectangle(0, 0, Resources.Sprites["radial"].Dimensions), 
+            new Rectangle(0, 0, 720, 720), 
+            Vector2.Zero, 
+            0, 
+            Raylib.ColorAlpha(Color.Black, alpha));
     }
     
     public static void CirclePulse(float t)

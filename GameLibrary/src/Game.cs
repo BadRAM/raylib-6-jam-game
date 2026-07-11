@@ -14,23 +14,24 @@ public static class Game
     public static bool DebugMode;
     public static List<MusicAsset> Playlist;
     public static MusicAsset? MusicPlaying;
-
+    public static readonly Color ScreenBlack = new Color(8, 8, 8, 255);
+    
     // Target Resolution: 720x720
     private static Camera2D _defaultCamera = new Camera2D(new Vector2(0, 0), Vector2.Zero, 0, 1);
     private static Camera2D _activeCamera = _defaultCamera;
     private static RenderTexture2D _renderTexture;
     private static Shader _screenShader;
     private static int _screenShaderMaskLocation;
-
-    private static AnimCamera _deviceCameraAnim = new AnimCamera(new Camera2D(Vector2.Zero, Vector2.Zero, 0, 1));
-
+    
+    private static AnimCurve<Camera2D> _deviceCameraAnim = new AnimCurve<Camera2D>(new Camera2D(Vector2.Zero, Vector2.Zero, 0, 1));
+    
     private static ConfigFlags _defaultFlags = ConfigFlags.TransparentWindow | ConfigFlags.UndecoratedWindow | ConfigFlags.Msaa4xHint;
     private static Vector2 _lastWindowDelta;
-
+    
     private static List<string> _scrollerTexts = new List<string>();
     private static float _scrollerAngle = 500;
     
-
+    
     public static void Load(bool isWeb)
     {
         IsWeb = isWeb;
@@ -48,6 +49,10 @@ public static class Game
         
         ActiveScene = new IntroScene();
         
+        Raylib.BeginDrawing();
+        Raylib.ClearBackground(Color.Blank);
+        Raylib.EndDrawing();
+        
         // ScrollText("SCROLLING TEXT, ON A CIRCLE. ONLY POSSIBLE IN RAYLIB THROUGH BADRAM'S MAD SKILLS.");
         // ScrollText("DID YOU THINK I WAS DONE? I'VE ONLY BEGUN TO SCROLL MY TEXT!");
         // ScrollText("I'M A TEXT SCROLLING MACHINE!");
@@ -57,9 +62,9 @@ public static class Game
     public static void Update()
     {
         Time.UpdateTime();
-
+        
         if (Raylib.IsKeyPressed(KeyboardKey.F3)) DebugMode = !DebugMode;
-
+        
         HoverInteractable = false;
         // if (!Raylib.CheckCollisionPointCircle(Raylib.GetMousePosition(), new Vector2(360, 360), 360))
         // {
@@ -79,7 +84,7 @@ public static class Game
         //         }
         //     }
         // }
-
+        
         MusicPlaying?.Update();
         if (MusicPlaying != null && !Raylib.IsMusicStreamPlaying(MusicPlaying.Music))
         {
@@ -90,7 +95,7 @@ public static class Game
         Raylib.ClearBackground(Color.Blank);
         Raylib.DrawTexturePro(Resources.Sprites["fakebanner"], Resources.Sprites["fakebanner"].Rect(), new Rectangle(360, 360, Resources.Sprites["fakebanner"].Size()), Resources.Sprites["fakebanner"].Size()/2, 0, Color.White);
         Raylib.BeginTextureMode(_renderTexture);
-        Raylib.ClearBackground(Color.Blank);
+        Raylib.ClearBackground(Color.Black);
         SetCamera();
         
         ActiveScene.Update();
@@ -114,7 +119,7 @@ public static class Game
         Raylib.EndMode2D();
         Raylib.EndTextureMode();
         _activeCamera = _defaultCamera;
-
+        
         Raylib.BeginMode2D(_deviceCameraAnim.Sample());
         
         if (!DebugMode)
@@ -137,6 +142,11 @@ public static class Game
         Raylib.EndBlendMode();
         
         Raylib.EndMode2D();
+
+        if (Time.Frame == 1)
+        {
+            Raylib.ClearBackground(Color.Blank);
+        }
         
         Raylib.EndDrawing();
         
@@ -145,7 +155,7 @@ public static class Game
 
     public static void MoveDevice(Vector2 center, float zoom, float duration, Func<float, float>? easing = null)
     {
-        _deviceCameraAnim = new AnimCamera
+        _deviceCameraAnim = AnimCurve.NewCamera2D
         (
             _deviceCameraAnim.Sample(),
             new Camera2D(center, new Vector2(360, 360), 0, zoom), 
@@ -154,6 +164,8 @@ public static class Game
         );
     }
     
+    public static bool IsDeviceMoving() => !_deviceCameraAnim.IsComplete();
+
     // angle is 0-360, tilt is 0-1
     private static void DrawRing(float angle, float tilt)
     {
@@ -186,7 +198,9 @@ public static class Game
             _scrollerAngle = ImGui.MeasureTextAngle(280, _scrollerTexts[0]) / 2 + 80;
         }
     }
-    
+
+    public static bool IsScrolling() => _scrollerTexts.Count > 0;
+
     public static Vector2 GetDevicePos()
     {
         Camera2D cam = _deviceCameraAnim.Sample();
