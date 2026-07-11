@@ -4,7 +4,7 @@ namespace GameLibrary;
 
 public static class Resources
 {
-    public static Dictionary<string, Texture2D> Sprites = new Dictionary<string, Texture2D>();
+    public static Dictionary<string, Sprite> Sprites = new Dictionary<string, Sprite>();
     public static Dictionary<string, SoundResource> Sounds = new Dictionary<string, SoundResource>();
     public static Dictionary<string, Music> Musics = new Dictionary<string, Music>();
     public static Dictionary<string, Font> Fonts = new Dictionary<string, Font>();
@@ -21,8 +21,7 @@ public static class Resources
         
         foreach (string spritePath in Directory.GetFiles(Game.Dir + "sprite/", "*.png", SearchOption.AllDirectories))
         {
-            Sprites.Add(Path.GetFileNameWithoutExtension(spritePath), Raylib.LoadTexture(spritePath));
-            Raylib.SetTextureFilter(Sprites[Path.GetFileNameWithoutExtension(spritePath)], TextureFilter.Bilinear);
+            Sprites.Add(Path.GetFileNameWithoutExtension(spritePath), new Sprite(spritePath));
             Console.WriteLine($"Sprites[{Path.GetFileNameWithoutExtension(spritePath)}]");
         }
         

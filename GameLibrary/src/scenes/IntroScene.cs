@@ -35,6 +35,7 @@ public class IntroScene : Scene
                     _step++;
                     _nextPulse = new AnimCurve<float>(1);
                     _pulseInterval = AnimCurve.NewFloat(3, 0.15f, 15);
+                    _stepProgress = AnimCurve.NewFloat(0, 10, 10);
                 }
             }
         }
@@ -46,15 +47,16 @@ public class IntroScene : Scene
                 Game.HoverInteractable = true;
             }
             
-            if (_pulseInterval.Sample() < 0.4 || cheat)
+            if (_stepProgress.IsComplete() || cheat)
             {
                 _step++;
-                Game.MoveDevice(new Vector2(360, 360), 1, 5, Easings.InOutQuad);
+                Game.MoveDevice(new Vector2(360, 360), 1, 10, Easings.InOutQuad);
+                _stepProgress = AnimCurve.NewFloat(0, 1, 8);
             }
         }
         else if (_step == 2)
         {
-            if (!Game.IsDeviceMoving() || cheat)
+            if (_stepProgress.IsComplete() || cheat)
             {
                 _nextPulse = new AnimCurve<float>(0);
                 _stepProgress = AnimCurve.NewFloat(0, 2, 2);
@@ -65,15 +67,15 @@ public class IntroScene : Scene
         {
             if (_stepProgress.IsComplete() || cheat)
             {
-                Resources.Sounds["startup"].Play();
+                Resources.Sounds["startup2"].Play();
                 _stepProgress = AnimCurve.NewFloat(0, 4, 4);
                 _step++;
             }
         }
         else if (_step == 4)
         {
-            Texture2D logo = Resources.Sprites["logo"];
-            Raylib.DrawTexturePro(logo, logo.Rect(), new Rectangle(360, 360, logo.Size()/2), logo.Size()/4, 0, Color.White);
+            Sprite logo = Resources.Sprites["logo"];
+            logo.DrawCentered(360, 360, logo.Size/2);
             ImGui.DrawTextRadial(0, -120, "powered by");
             Raylib.DrawCircle(360, 360, 350, Raylib.ColorAlpha(Game.ScreenBlack, 1 - (_stepProgress.Sample() - 1f)));
             
@@ -85,8 +87,8 @@ public class IntroScene : Scene
         }
         else if (_step == 5)
         {
-            Texture2D logo = Resources.Sprites["logo"];
-            Raylib.DrawTexturePro(logo, logo.Rect(), new Rectangle(360, 360, logo.Size()/2), logo.Size()/4, 0, Color.White);
+            Sprite logo = Resources.Sprites["logo"];
+            logo.DrawCentered(360, 360, logo.Size/2);
             ImGui.DrawTextRadial(0, -120, "powered by");
             Raylib.DrawCircle(360, 360, 350, Raylib.ColorAlpha(Game.ScreenBlack, _stepProgress.Sample()));
 

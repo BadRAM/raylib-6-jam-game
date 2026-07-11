@@ -19,7 +19,6 @@ public class GameScene : Scene
 {
     private B2WorldId WorldId;
     private static B2DebugDraw _debugDraw = Box2dDebugDrawRaylib.Create();
-    private Texture2D _ballTex;
     float timeStep = 1.0f / 60.0f;
     int subStepCount = 4;
     
@@ -43,8 +42,6 @@ public class GameScene : Scene
     
     public GameScene()
     {
-        _ballTex = Resources.Sprites["graysan"];
-        
         B2WorldDef worldDef = b2DefaultWorldDef();
         
         worldDef.gravity = new B2Vec2(0.0f, 0.0f);
@@ -57,10 +54,9 @@ public class GameScene : Scene
         Raylib.ClearBackground(Color.DarkBlue);
         
         {
-            Texture2D tex = Resources.Sprites["charge_meter"];
             float height = 720 - (float)_displayedScore / _targetScore * 720;
             Color col = Raylib.ColorAlpha(Color.SkyBlue, 128);
-            Raylib.DrawTexturePro(tex, tex.Rect(), new Rectangle(0, height, 720, 720), Vector2.Zero, 0, col);
+            Resources.Sprites["charge_meter"].Draw(0, height, 720, 720, tint: col);
         }
 
         if (_state == State.Draining)
@@ -125,9 +121,8 @@ public class GameScene : Scene
         
             if (_balls.Count > 350 && Time.Scaled % 1f < 0.5f)
             {
-                Texture2D tex = Resources.Sprites["radial_inverted"];
                 Color col = new Color(255, 0, 0, _balls.Count - 300);
-                Raylib.DrawTexturePro(tex, tex.Rect(), new Rectangle(0, 0, 720, 720), Vector2.Zero, 0, col);
+                Resources.Sprites["radial_inverted"].Draw(0, 0, 720, 720, tint: col);
                 ImGui.DrawTextCentered("Overflow\nImminent", 360, 360, 40);
             }
         
@@ -162,8 +157,7 @@ public class GameScene : Scene
 
             
             float size = 200 * _drainAnim.Sample();
-            Texture2D tex = Resources.Sprites["mask"];
-            Raylib.DrawTexturePro(tex, tex.Rect(), new Rectangle(360, 360, Vector2.One * size), Vector2.One * size / 2, 0, Color.Black);
+            Resources.Sprites["mask"].DrawCentered(360, 360, size, size, tint: Color.Black );
             
             List<Ball> ballsToRemove = new List<Ball>();
             foreach (Ball ball in _balls)
@@ -257,13 +251,12 @@ public class GameScene : Scene
             }
             else
             {
-                Texture2D glow = Resources.Sprites["graysan"];
                 Color col = mergeBalls.Count > _combo ? Color.White : Color.Black;
                 col = Raylib.ColorAlpha(col, 0.25f);
                 foreach (Ball ball in mergeBalls)
                 {
                     Vector2 pos = b2Body_GetWorldCenterOfMass(ball.Body).ToVec2() * 10;
-                    Raylib.DrawTexturePro(glow, glow.Rect(), new Rectangle(pos, glow.Dimensions/2), glow.Dimensions/4, 0, col);
+                    Resources.Sprites["mask"].DrawCentered(pos, new Vector2(28, 28), tint: col);
                 }
             }
         }
@@ -439,10 +432,11 @@ public class GameScene : Scene
         public void Draw()
         {
             Position = b2Body_GetWorldCenterOfMass(Body).ToVec2();
+            Vector2 pos = Position * 10;
             Vector2 size = new Vector2(28, 28);
-            Texture2D baseTex = Resources.Sprites["orb_base"];
-            Texture2D? spinPattern = null;
-            Texture2D shineTex = Resources.Sprites["orb_shine"];
+            Sprite baseSprite = Resources.Sprites["orb_base"];
+            Sprite? spinPattern = null;
+            Sprite specular = Resources.Sprites["orb_shine"];
             Color col = Color.Pink;
             switch (BallType)
             {
@@ -480,9 +474,9 @@ public class GameScene : Scene
                 default:
                     throw new ArgumentOutOfRangeException();
             }
-            Raylib.DrawTexturePro(baseTex, baseTex.Rect(), new Rectangle(Position * 10, size), size/2, 0, col);
-            if (spinPattern != null) Raylib.DrawTexturePro(spinPattern.Value, spinPattern.Value.Rect(), new Rectangle(Position * 10, size), size/2, Rotation, col);
-            Raylib.DrawTexturePro(shineTex, shineTex.Rect(), new Rectangle(Position * 10, size), size/2, 0, Color.White);
+            baseSprite.DrawCentered(pos, size, tint: col);
+            if (spinPattern != null) spinPattern.DrawCentered(pos, size, rotation: Rotation, tint: Color.Lerp(col, Color.White, Easings.FullSine((Game.MusicPlaying?.Beat() ?? 0f) % 1f)/4f+0.5f));
+            specular.DrawCentered(pos, size, tint: col);
         }
 
     }

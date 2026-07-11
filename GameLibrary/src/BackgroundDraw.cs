@@ -67,18 +67,11 @@ public static class BackgroundDraw
 
     public static void Web(float alpha = 1f)
     {
-        Raylib.DrawTexturePro(
-            Resources.Sprites["radial"], 
-            new Rectangle(0, 0, Resources.Sprites["radial"].Dimensions), 
-            new Rectangle(0, 0, 720, 720), 
-            Vector2.Zero, 
-            0, 
-            Raylib.ColorAlpha(Color.Black, alpha));
+        Resources.Sprites["radial"].Draw(0, 0, 720, 720, tint: Raylib.ColorAlpha(Color.Black, alpha));
         for (int i = 0; i < 8; i++)
         {
             Raylib.DrawCircleLines(360, 360, 45 * i, Color.Black);
         }
-        // Raylib.DrawLineEx(new Vector2(0, 0), new Vector2(720, 720), 4, Color.Black);
         Raylib.DrawLine(0, 0, 720, 720, Color.Black);
         Raylib.DrawLine(0, 720, 720, 0, Color.Black);
         Raylib.DrawLine(360, 0, 360, 720, Color.Black);
@@ -87,28 +80,14 @@ public static class BackgroundDraw
 
     public static void Spiral(float alpha = 1f)
     {
-        Texture2D tex = Resources.Sprites["spiral2"];
-        Raylib.DrawTexturePro(tex, tex.Rect(), new Rectangle(360, 360, 720, 720), new Vector2(360, 360), -Time.Scaled * 180, Raylib.ColorAlpha(Color.Black, alpha/2));
-        Raylib.DrawTexturePro(
-            Resources.Sprites["radial"], 
-            new Rectangle(0, 0, Resources.Sprites["radial"].Dimensions), 
-            new Rectangle(0, 0, 720, 720), 
-            Vector2.Zero, 
-            0, 
-            Raylib.ColorAlpha(Color.Black, alpha));
+        Sprite spiral = Resources.Sprites["spiral2"];
+        spiral.DrawCentered(360, 360, 720, 720, rotation: -Time.Scaled * 180, tint: Raylib.ColorAlpha(Color.Black, alpha/2));
+        Resources.Sprites["radial"].Draw(Vector2.Zero, new Vector2(720, 720), tint: Raylib.ColorAlpha(Color.Black, alpha));
     }
     
     public static void CirclePulse(float t)
     {
         t = Easings.OutQuad(t);
-        Rectangle src = Resources.Sprites["circle_soft"].Rect();
-        Rectangle dst = new Rectangle(360, 360, new Vector2(820, 820) * t);
-        Raylib.DrawTexturePro(
-            Resources.Sprites["circle_soft"], 
-            src, 
-            dst, 
-            dst.Size/2, 
-            0, 
-            new Color(255, 255, 255, (int)float.Lerp(224, 0, t)));
+        Resources.Sprites["circle_soft"].DrawCentered(new Vector2(360, 360), new Vector2(820, 820) * t, tint: Raylib.ColorAlpha(Color.White, 1 - t));
     }
 }

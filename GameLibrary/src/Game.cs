@@ -19,9 +19,14 @@ public static class Game
     // Target Resolution: 720x720
     private static Camera2D _defaultCamera = new Camera2D(new Vector2(0, 0), Vector2.Zero, 0, 1);
     private static Camera2D _activeCamera = _defaultCamera;
-    private static RenderTexture2D _renderTexture;
+    private static RenderTexture2D _screenRenderTarget;
     private static Shader _screenShader;
     private static int _screenShaderMaskLocation;
+
+    private static RenderTexture2D _portalEdgeRenderTarget;
+    private static RenderTexture2D _portalViewRenderTarget;
+    public static AnimCurve<float> PortalSize = new AnimCurve<float>(0);
+    public static Sprite PortalView;
     
     private static AnimCurve<Camera2D> _deviceCameraAnim = new AnimCurve<Camera2D>(new Camera2D(Vector2.Zero, Vector2.Zero, 0, 1));
     
@@ -40,12 +45,16 @@ public static class Game
         Raylib.SetTargetFPS(Time.FrameRate);
         Raylib.InitAudioDevice();
         Raylib.SetExitKey(KeyboardKey.Null);
-        _renderTexture = Raylib.LoadRenderTexture(720, 720);
+        _screenRenderTarget = Raylib.LoadRenderTexture(720, 720);
+        _portalViewRenderTarget = Raylib.LoadRenderTexture(720, 720);
+        _portalEdgeRenderTarget = Raylib.LoadRenderTexture(720, 720);
         
         Resources.Load();
         Assets.Load();
         _screenShader = Resources.Shaders["screen_fragment"];
         _screenShaderMaskLocation = Raylib.GetShaderLocation(_screenShader, "mask");
+
+        PortalView = Resources.Sprites["site1"];
         
         ActiveScene = new IntroScene();
         
@@ -93,8 +102,11 @@ public static class Game
         
         Raylib.BeginDrawing();
         Raylib.ClearBackground(Color.Blank);
-        Raylib.DrawTexturePro(Resources.Sprites["fakebanner"], Resources.Sprites["fakebanner"].Rect(), new Rectangle(360, 360, Resources.Sprites["fakebanner"].Size()), Resources.Sprites["fakebanner"].Size()/2, 0, Color.White);
-        Raylib.BeginTextureMode(_renderTexture);
+        Resources.Sprites["fakebanner"].DrawCentered(360, 360);
+        
+        if (PortalSize.Sample() > 0) DrawPortal();
+        
+        Raylib.BeginTextureMode(_screenRenderTarget);
         Raylib.ClearBackground(Color.Black);
         SetCamera();
         
@@ -125,13 +137,13 @@ public static class Game
         if (!DebugMode)
         {
             Raylib.BeginShaderMode(_screenShader);
-            Raylib.SetShaderValueTexture(_screenShader, _screenShaderMaskLocation, Resources.Sprites["screen_mask_colored"]);
-            Raylib.DrawTextureRec(_renderTexture.Texture, new Rectangle(0, 0, 720, -720), Vector2.Zero, Color.White);
+            Raylib.SetShaderValueTexture(_screenShader, _screenShaderMaskLocation, Resources.Sprites["screen_mask_colored"].Texture);
+            Raylib.DrawTextureRec(_screenRenderTarget.Texture, new Rectangle(0, 0, 720, -720), Vector2.Zero, Color.White);
             Raylib.EndShaderMode();
         }
         else
         {
-            Raylib.DrawTextureRec(_renderTexture.Texture, new Rectangle(0, 0, 720, -720), Vector2.Zero, Color.White);
+            Raylib.DrawTextureRec(_screenRenderTarget.Texture, new Rectangle(0, 0, 720, -720), Vector2.Zero, Color.White);
         }
         
         DrawRing(Time.Scaled * 2, MathF.Sin(Time.Scaled / 2f) / 2f + 0.5f);
@@ -171,12 +183,11 @@ public static class Game
     {
         int frame = (int)MathF.Floor((tilt % 1) * 10);
         float subframe = ((tilt % 1) * 10) % 1;
-
-        Rectangle src = new Rectangle(0, 0, 720, 720);
-        Rectangle dst = new Rectangle(360, 360, 720, 720);
-        Raylib.DrawTexturePro(Resources.Sprites[$"glass_shine"], src, dst, new Vector2(360, 360), -40, Color.White);
-        Raylib.DrawTexturePro(Resources.Sprites[$"ring{frame}"], src, dst, new Vector2(360, 360), angle, Color.White);
-        Raylib.DrawTexturePro(Resources.Sprites[$"ring{Math.Min(frame + 1, 9)}"], src, dst, new Vector2(360, 360), angle, new Color(255, 255, 255, (int)(255 * subframe)));
+        Vector2 screen = new Vector2(720, 720);
+        
+        Resources.Sprites[$"glass_shine"].DrawCentered(screen/2, screen, rotation: -40);
+        Resources.Sprites[$"ring{frame}"].DrawCentered(screen/2, screen, rotation: angle);
+        Resources.Sprites[$"ring{Math.Min(frame + 1, 9)}"].DrawCentered(screen/2, screen, rotation: angle, tint: Raylib.ColorAlpha(Color.White, subframe));
         
         // ImGui.DrawTextRadial(0, -240, $"F:{frame} S:{subframe:N2} A:{angle:N0}");
     }
@@ -185,9 +196,44 @@ public static class Game
     {
         Raylib.BeginBlendMode(BlendMode.CustomSeparate);
         Rlgl.SetBlendFactorsSeparate(Rlgl.ZERO, Rlgl.ONE, Rlgl.ONE, Rlgl.ZERO, Rlgl.FUNC_ADD, Rlgl.FUNC_ADD);
-        Raylib.DrawTexture(Resources.Sprites["mask"], 0, 0, Color.White);
+        Resources.Sprites["mask"].Draw(0, 0);
         // Raylib.DrawRectangle(0, 0, 720, 720, Color.White);
         Raylib.EndBlendMode();
+    }
+
+    public static void DrawPortal()
+    {
+        Vector2 size = Vector2.One * PortalSize.Sample();
+        Vector2 viewSize = size * 0.8f;
+        
+        Raylib.BeginTextureMode(_portalViewRenderTarget);
+            PortalView.Draw(0, 0);
+            Raylib.BeginBlendMode(BlendMode.CustomSeparate);
+            Rlgl.SetBlendFactorsSeparate(Rlgl.ZERO, Rlgl.ONE, Rlgl.ONE, Rlgl.ZERO, Rlgl.FUNC_ADD, Rlgl.FUNC_ADD);
+            Resources.Sprites["mask"].DrawCentered(360, 360, viewSize);
+            
+            Raylib.EndBlendMode();
+        Raylib.EndTextureMode();
+        
+        Raylib.BeginTextureMode(_portalEdgeRenderTarget);
+            Sprite fire = Resources.Sprites["fire1"];
+            fire.DrawCentered(360, 360, 720, 720, new Rectangle(Time.Scaled * 10, 0, 512, 512), Time.Scaled);
+            Raylib.BeginBlendMode(BlendMode.Additive);
+            fire.DrawCentered(360, 360, 720, 720, new Rectangle(Time.Scaled * 10 + 128, 0, 512, 512), 120 + Time.Scaled);
+            fire.DrawCentered(360, 360, 720, 720, new Rectangle(Time.Scaled * 10 + 256, 0, 512, 512), 240 + Time.Scaled);
+            Raylib.EndBlendMode();
+            Raylib.BeginBlendMode(BlendMode.CustomSeparate);
+            Rlgl.SetBlendFactorsSeparate(Rlgl.ZERO, Rlgl.ONE, Rlgl.ONE, Rlgl.ZERO, Rlgl.FUNC_ADD, Rlgl.FUNC_ADD);
+            Resources.Sprites["ringmask"].DrawCentered(360, 360, size);
+            Raylib.EndBlendMode();
+        Raylib.EndTextureMode();
+
+        Rectangle viewSrc = new Rectangle(360 - viewSize.X/2 + 1, 360 - viewSize.Y/2 + 1, viewSize.X - 2, -viewSize.Y + 2);
+        Rectangle viewDst = new Rectangle(360 - viewSize.X/2 + 1, 360 - viewSize.Y/2 + 1, viewSize.X - 2,  viewSize.Y - 2);
+        Raylib.DrawTexturePro(_portalViewRenderTarget.Texture, viewSrc, viewDst, Vector2.Zero, 0, Color.White);
+        Rectangle edgeSrc = new Rectangle(360 - size.X/2 + 1, 360 - size.Y/2 + 1, size.X - 2, -size.Y + 2);
+        Rectangle edgeDst = new Rectangle(360 - size.X/2 + 1, 360 - size.Y/2 + 1, size.X - 2,  size.Y - 2);
+        Raylib.DrawTexturePro(_portalEdgeRenderTarget.Texture, edgeSrc, edgeSrc, Vector2.Zero, 0, Color.White);
     }
     
     public static void ScrollText(string text)

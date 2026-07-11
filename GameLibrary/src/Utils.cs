@@ -60,4 +60,15 @@ public static class Utils
                c1.B == c2.B &&
                c1.A == c2.A;
     }
+    
+    public static Rectangle FlipX(this Rectangle rect)
+    {
+        rect.Width *= -1;
+        return rect;
+    }
+    public static Rectangle FlipY(this Rectangle rect)
+    {
+        rect.Height *= -1;
+        return rect;
+    }
 }
