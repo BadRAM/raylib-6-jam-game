@@ -76,7 +76,7 @@ public static class Game
     {
         Time.UpdateTime();
         
-        if (Raylib.IsKeyPressed(KeyboardKey.F3)) DebugMode = !DebugMode;
+        // if (Raylib.IsKeyPressed(KeyboardKey.F3)) DebugMode = !DebugMode;
         
         HoverInteractable = false;
         // if (!Raylib.CheckCollisionPointCircle(Raylib.GetMousePosition(), new Vector2(360, 360), 360))

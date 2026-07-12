@@ -133,6 +133,7 @@ public class LaserFakeoutScene : Scene
             Resources.Sprites["mask"].DrawCentered(360, 360, Vector2.One * 200 * (1 - _stepProgress.Sample()), tint: Color.Black );
             if (_stepProgress.IsComplete())
             {
+                Mixer.PlayNextMusic();
                 Game.MoveDevice(new Vector2(360, 360), 1, 1);
                 Game.LevelIndex++;
                 Game.ActiveScene = new MainMenu(false);

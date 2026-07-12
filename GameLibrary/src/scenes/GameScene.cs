@@ -31,6 +31,8 @@ public class GameScene : Scene
     private float _lastClear;
     private List<ScoreAnim> _scoreAnims = new List<ScoreAnim>();
     private AnimCurve<float> _drainAnim = new AnimCurve<float>(1);
+    private bool _overflow;
+    private bool _endless;
 
     private State _state = State.Gaming;
     
@@ -40,8 +42,9 @@ public class GameScene : Scene
         Draining
     }
     
-    public GameScene()
+    public GameScene(bool endlessMode = false)
     {
+        _endless = endlessMode;
         B2WorldDef worldDef = b2DefaultWorldDef();
         
         worldDef.gravity = new B2Vec2(0.0f, 0.0f);
@@ -54,12 +57,18 @@ public class GameScene : Scene
         }
 
         _targetScore = Game.Level.TargetScore;
+        if (endlessMode)
+        {
+            _targetScore = int.MaxValue;
+        }
         
         Start();
     }
 
     public void Start()
     {
+        _overflow = false;
+        _state = State.Gaming;
         if (Mixer.IsPaused)
         {
             Mixer.Resume();
@@ -93,14 +102,14 @@ public class GameScene : Scene
             BackgroundDraw.ChargeMeter((float)_displayedScore / (float)_targetScore);
         }
         
-        if (Raylib.IsKeyDown(KeyboardKey.A)) Raylib.ClearBackground(new Color(32, 32, 32, 255));
+        // if (Raylib.IsKeyDown(KeyboardKey.A)) Raylib.ClearBackground(new Color(32, 32, 32, 255));
         
         BackgroundDraw.CirclePulse(Math.Max(0, Mixer.Beat() / 4 - 0.5f) % 1);
         BackgroundDraw.CirclePulse(Math.Max(0, Mixer.Beat() / 4 - 0.0f) % 1);
         BackgroundDraw.Waveform2();
 
         int ballFreq = _combo >= 2 && _balls.Count < 200 ? 5 : 10;
-        if (_state == State.Gaming && (Time.Frame % ballFreq == 0 || _balls.Count < 60 || Raylib.IsKeyDown(KeyboardKey.L)))
+        if (_state == State.Gaming && (Time.Frame % ballFreq == 0 || _balls.Count < 60))
         {
             Vector2 pos = Vector2.Normalize(Utils.InsideUnitCircle(Random.Shared)) * 32f + new Vector2(36, 36);
             MakeBall(pos, Ball.RandomDefaultType());
@@ -196,6 +205,7 @@ public class GameScene : Scene
             if (_balls.Count > 400)
             {
                 _score = 0;
+                _overflow = true;
                 Drain();
                 Game.ScrollText("Orb Overflow! Charge vented.");
             }
@@ -212,7 +222,14 @@ public class GameScene : Scene
         {
             if (_balls.Count == 0 && _drainAnim.IsComplete())
             {
-                Game.Level.TargetReachedAction.Invoke();
+                if (!_overflow)
+                {
+                    Game.Level.TargetReachedAction.Invoke();
+                }
+                else
+                {
+                    Start();
+                }
             }
 
             
@@ -254,8 +271,8 @@ public class GameScene : Scene
             ImGui.DrawTextRadial(0, 240, "..............................".Substring(comboPercentage));
         }
         
-        if (Raylib.IsKeyDown(KeyboardKey.V))
-            b2World_Draw(WorldId, _debugDraw);
+        // if (Raylib.IsKeyDown(KeyboardKey.V))
+        //     b2World_Draw(WorldId, _debugDraw);
     }
 
     private void HandleInput()
@@ -545,12 +562,43 @@ public class GameScene : Scene
             specular.DrawCentered(pos, size);
         }
 
+        public Color GetTint()
+        {
+            Color col = Color.Pink;
+            switch (BallType)
+            {
+                case Type.Red:
+                case Type.RedCrystal:
+                    col = Color.Red;
+                    break;
+                case Type.Blue:
+                case Type.BlueCrystal:
+                    col = Color.SkyBlue;
+                    break;
+                case Type.Yellow:
+                case Type.YellowCrystal:
+                    col = Color.Yellow;
+                    break;
+                case Type.Purple:
+                case Type.PurpleCrystal:
+                    col = Color.Purple;
+                    break;
+                case Type.Bomb:
+                    col = Color.DarkGray;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+
+            return col;
+        }
     }
     
     public class ScoreAnim
     {
         private string _text;
-        private AnimCurve<float> _anim;
+        private AnimCurve<float> _anim = AnimCurve.NewFloat(0, 1, 2);
+        private AnimCurve<float> _mergeAnim = AnimCurve.NewFloat(0, 1, 0.35f);
         private Vector2 _pos;
         private List<Ball> _balls;
 
@@ -559,12 +607,16 @@ public class GameScene : Scene
             _text = text;
             _pos = pos;
             _balls = balls;
-            _anim = AnimCurve.NewFloat(0, 1, 2);
         }
 
         public void Draw()
         {
             ImGui.DrawText(_text, _pos + new Vector2(0, -48) * _anim.Sample(), color: Raylib.ColorAlpha(Color.White, Easings.OutQuint(1 - _anim.Sample())));
+            if (_mergeAnim.IsComplete()) return;
+            foreach (Ball ball in _balls)
+            {
+                Resources.Sprites["radial"].DrawCentered(Vector2.Lerp(ball.Position * 10, _pos, _mergeAnim.Sample()), new Vector2(32, 32), tint: Raylib.ColorAlpha(ball.GetTint(), 1-_mergeAnim.Sample()));
+            }
         }
 
         public bool IsComplete() => _anim.IsComplete();

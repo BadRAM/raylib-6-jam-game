@@ -31,7 +31,7 @@ public class MainMenu : Scene
         // if (Raylib.IsKeyPressed(KeyboardKey.Four )) Game.MoveDevice(new Vector2(180, 540), 0.5f,  1);
         // if (Raylib.IsKeyPressed(KeyboardKey.Five )) Game.MoveDevice(new Vector2(240, 480), 0.66f,  1);
         // if (Raylib.IsKeyPressed(KeyboardKey.G    )) Game.ActiveScene = new GameScene();
-        if (Raylib.IsKeyPressed(KeyboardKey.H    )) Game.Level.TargetReachedAction.Invoke();
+        // if (Raylib.IsKeyPressed(KeyboardKey.H    )) Game.Level.TargetReachedAction.Invoke();
         // if (Raylib.IsKeyPressed(KeyboardKey.K    )) Game.OpenPortal();
         // if (Raylib.IsKeyPressed(KeyboardKey.L    )) Game.ClosePortal();
 
@@ -49,17 +49,17 @@ public class MainMenu : Scene
         
         Resources.Sprites["cd"].DrawCentered(360, 360, Resources.Sprites["cd"].Size/2, rotation: Time.Scaled * 60);
         
-        if (Game.DebugMode && Mixer.MusicPlaying != null)
-        {
-            if (Mixer.IsBeatThisFrame())
-            {
-                Resources.Sounds["metronome"].Play(volume:0.5f);
-            }
-
-            if (Raylib.IsKeyPressed(KeyboardKey.Equal)) Mixer.MusicPlaying.FirstBeat += 0.01f;
-            if (Raylib.IsKeyPressed(KeyboardKey.Minus)) Mixer.MusicPlaying.FirstBeat -= 0.01f;
-            if (Raylib.IsKeyPressed(KeyboardKey.Enter)) Game.ScrollText(Mixer.MusicPlaying.Title + " " + Mixer.MusicPlaying.FirstBeat.ToString("N3"));
-        }
+        // if (Game.DebugMode && Mixer.MusicPlaying != null)
+        // {
+        //     if (Mixer.IsBeatThisFrame())
+        //     {
+        //         Resources.Sounds["metronome"].Play(volume:0.5f);
+        //     }
+        //
+        //     if (Raylib.IsKeyPressed(KeyboardKey.Equal)) Mixer.MusicPlaying.FirstBeat += 0.01f;
+        //     if (Raylib.IsKeyPressed(KeyboardKey.Minus)) Mixer.MusicPlaying.FirstBeat -= 0.01f;
+        //     if (Raylib.IsKeyPressed(KeyboardKey.Enter)) Game.ScrollText(Mixer.MusicPlaying.Title + " " + Mixer.MusicPlaying.FirstBeat.ToString("N3"));
+        // }
 
         DrawRadialMenu();
 

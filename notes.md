@@ -3,16 +3,13 @@ Raylib Jam
 a9b3ea
 
 Stack:
- - Final script
- - Portal effect
- - Radial menu
+ - Update page text
+ - Implement the promised endless mode
+ - Menu to minigame transition
  - Cleanup, sensible scene system and device/scene distinction. (Gamescene vs Devicescene?)
- - Intro 'cutscene'
- - Storyline integration
  - Implement charge sound
  - alert sirens
  - Ball merge animation
- - Overfill animation
  - Flipover animation
 
 Requirements:
@@ -41,6 +38,8 @@ Monster Ideas:
  - INSANO from NFM
  - 
 
+ Zensoft products are at the very cutting edge of web 2.0 technologies, offering innovative solutions to tomorrow's problems. Try our newest product line, CALYPSO, right here in supporting browsers (Internet Explorer 7.0+, Netscape Navigator unsupported.) The CALYPSO system guarantees a superior internet browsing experience through our patented "Code Cleaning" technology. Through mesh processing, every CALYPSO user contributes to making the web a secure*, cohesive experience of exceptional quality. 
+
 Websites:
 With permission:
 https://leafyyy.neocities.org/
@@ -50,14 +49,10 @@ https://geocities.restorativland.org/Heartland/Grove/1137/
  - Horse
 https://geocities.restorativland.org/Heartland/Ranch/1782/
  - Chuck's Medival Madness
-https://geocities.restorativland.org/Heartland/Ranch/1026/
- - Hammyland!
-https://geocities.restorativland.org/Heartland/Ranch/1796/
- - Wiener Dogs
-https://geocities.restorativland.org/SunsetStrip/1131/
- - The purple experience, Prince fanpage
-https://geocities.restorativland.org/Area51/4644/
- - PUNK'S
+https://geocities.restorativland.org/Area51/Dreamworld/3498/
+ - It's MANGA
+https://geocities.restorativland.org/Area51/Dreamworld/2274/
+ - Groovy Galaxy
 
 Plot: 
  - The device is for deleting conflicting aesthetics from the internet, to prepare it for Y2K

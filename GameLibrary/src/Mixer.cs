@@ -73,6 +73,8 @@ public static class Mixer
     
     public static void PlayMusic(MusicAsset music)
     {
+        IsPaused = false;
+        AutoPlay = true;
         _musicFade = AnimCurve.NewFloat(0, FullVolume, 1);
         MusicPlaying?.Stop();
         MusicPlaying = music;

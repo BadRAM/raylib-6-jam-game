@@ -15,6 +15,7 @@ public class MusicAsset
     public MusicAsset(Music music, string title, string artistName, float beatsPerMinute, float firstBeat)
     {
         Music = music;
+        Music.Looping = false;
         Title = title;
         ArtistName = artistName;
         BeatsPerMinute = beatsPerMinute;

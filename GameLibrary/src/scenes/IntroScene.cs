@@ -9,7 +9,10 @@ public class IntroScene : Scene
     private List<AnimCurve<float>> _pulses = new List<AnimCurve<float>>();
     private AnimCurve<float> _nextPulse = new AnimCurve<float>(0);
     private AnimCurve<float> _pulseInterval;
-    private AnimCurve<float> _stepProgress;
+    private AnimCurve<float> _stepProgress = new AnimCurve<float>(1);
+    private bool _aPressed;
+    private bool _cPressed;
+    private bool _dPressed;
     
     public IntroScene()
     {
@@ -21,6 +24,16 @@ public class IntroScene : Scene
         DoPulses();
 
         bool cheat = Raylib.IsKeyPressed(KeyboardKey.G);
+
+        if (Raylib.IsKeyPressed(KeyboardKey.A)) _aPressed = true;
+        if (Raylib.IsKeyPressed(KeyboardKey.C)) _cPressed = true;
+        if (Raylib.IsKeyPressed(KeyboardKey.D)) _dPressed = true;
+
+        if (_aPressed && _cPressed && _dPressed && _step < 3)
+        {
+            Game.MoveDevice(new Vector2(360, 360), 1, 2, Easings.InOutSine);
+            _step = 3;
+        }
         
         Raylib.ClearBackground(_step >= 4 ? Game.ScreenBlack : Color.Black);
 
@@ -102,7 +115,14 @@ public class IntroScene : Scene
         {
             if (_stepProgress.IsComplete() || cheat)
             {
-                Game.ActiveScene = new MainMenu(true);
+                if (_aPressed && _dPressed && _cPressed)
+                {
+                    Game.ActiveScene = new GameScene(true);
+                }
+                else
+                {
+                    Game.ActiveScene = new MainMenu(true);
+                }
             }
         }
     }
