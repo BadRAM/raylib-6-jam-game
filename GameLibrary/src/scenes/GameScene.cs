@@ -72,8 +72,8 @@ public class GameScene : Scene
         
         if (Raylib.IsKeyDown(KeyboardKey.A)) Raylib.ClearBackground(new Color(32, 32, 32, 255));
         
-        BackgroundDraw.CirclePulse(Math.Max(0, Game.MusicPlaying.Beat() / 4 - 0.5f) % 1);
-        BackgroundDraw.CirclePulse(Math.Max(0, Game.MusicPlaying.Beat() / 4 - 0.0f) % 1);
+        BackgroundDraw.CirclePulse(Math.Max(0, Mixer.Beat() / 4 - 0.5f) % 1);
+        BackgroundDraw.CirclePulse(Math.Max(0, Mixer.Beat() / 4 - 0.0f) % 1);
         BackgroundDraw.Waveform2();
 
         int ballFreq = _combo >= 2 && _balls.Count < 200 ? 5 : 10;
@@ -475,7 +475,7 @@ public class GameScene : Scene
                     throw new ArgumentOutOfRangeException();
             }
             baseSprite.DrawCentered(pos, size, tint: col);
-            if (spinPattern != null) spinPattern.DrawCentered(pos, size, rotation: Rotation, tint: Color.Lerp(col, Color.White, Easings.FullSine((Game.MusicPlaying?.Beat() ?? 0f) % 1f)/4f+0.5f));
+            if (spinPattern != null) spinPattern.DrawCentered(pos, size, rotation: Rotation, tint: Color.Lerp(col, Color.White, Easings.FullSine(Mixer.Beat() % 1f)/4f+0.5f));
             specular.DrawCentered(pos, size, tint: col);
         }
 

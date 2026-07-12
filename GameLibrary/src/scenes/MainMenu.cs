@@ -13,9 +13,9 @@ public class MainMenu : Scene
     
     public MainMenu(bool fromBlack)
     {
-        Game.ShuffleMusic(Assets.Musics.Values.ToList());
+        Mixer.Playlist = Assets.Musics.Values.ToList();
         if (fromBlack) _loadAnim = AnimCurve.NewFloat(0, 1, 1);
-        Assets.Dialogues[1].Play();
+        Mixer.PlayDialogue(Assets.Dialogues[1]);
     }
     
     public override void Update()
@@ -28,6 +28,8 @@ public class MainMenu : Scene
         if (Raylib.IsKeyPressed(KeyboardKey.G    )) Game.ActiveScene = new GameScene();
         if (Raylib.IsKeyPressed(KeyboardKey.K    )) Game.PortalSize = AnimCurve.NewFloat(0, 720, 1, Easings.OutQuart);
         if (Raylib.IsKeyPressed(KeyboardKey.L    )) Game.PortalSize = AnimCurve.NewFloat(720, 0, 1, Easings.InQuart);
+
+        if (Mixer.DialoguePlaying == null) Mixer.AutoPlay = true;
         
         Raylib.ClearBackground(Color.DarkBlue);
         
@@ -35,31 +37,147 @@ public class MainMenu : Scene
         
         if (Raylib.IsKeyDown(KeyboardKey.A)) Raylib.ClearBackground(new Color(32, 32, 32, 255));
         
-        BackgroundDraw.CirclePulse(Math.Max(0, Game.MusicPlaying.Beat() / 4 - 0.5f) % 1);
-        BackgroundDraw.CirclePulse(Math.Max(0, Game.MusicPlaying.Beat() / 4 - 0.0f) % 1);
+        BackgroundDraw.CirclePulse(Math.Max(0, Mixer.Beat() / 4 - 0.5f) % 1);
+        BackgroundDraw.CirclePulse(Math.Max(0, Mixer.Beat() / 4 - 0.0f) % 1);
         BackgroundDraw.Waveform2();
         
         Resources.Sprites["cd"].DrawCentered(360, 360, Resources.Sprites["cd"].Size/2, rotation: Time.Scaled * 60);
         
-        if (Raylib.IsKeyPressed(KeyboardKey.N))
+        if (Game.DebugMode && Mixer.MusicPlaying != null)
         {
-            Game.ShuffleMusic(Assets.Musics.Values.ToList());
-        }
-        
-        if (Game.DebugMode)
-        {
-            if (Game.MusicPlaying.IsBeatThisFrame())
+            if (Mixer.IsBeatThisFrame())
             {
                 Resources.Sounds["metronome"].Play(volume:0.5f);
             }
 
-            if (Raylib.IsKeyPressed(KeyboardKey.Equal)) Game.MusicPlaying.FirstBeat += 0.01f;
-            if (Raylib.IsKeyPressed(KeyboardKey.Minus)) Game.MusicPlaying.FirstBeat -= 0.01f;
-            if (Raylib.IsKeyPressed(KeyboardKey.Enter)) Game.ScrollText(Game.MusicPlaying.Title + " " + Game.MusicPlaying.FirstBeat.ToString("N3"));
+            if (Raylib.IsKeyPressed(KeyboardKey.Equal)) Mixer.MusicPlaying.FirstBeat += 0.01f;
+            if (Raylib.IsKeyPressed(KeyboardKey.Minus)) Mixer.MusicPlaying.FirstBeat -= 0.01f;
+            if (Raylib.IsKeyPressed(KeyboardKey.Enter)) Game.ScrollText(Mixer.MusicPlaying.Title + " " + Mixer.MusicPlaying.FirstBeat.ToString("N3"));
         }
+
+        DrawRadialMenu();
 
         if (_loadAnim.Sample() < 1) Raylib.DrawCircle(360, 360, 350, Raylib.ColorAlpha(Game.ScreenBlack, 1 - _loadAnim.Sample()));
         
         Raylib.UpdateMusicStream(_menuMusic);
+    }
+
+    private void DrawRadialMenu()
+    {
+        Camera2D spin = new Camera2D
+        {
+            Target = new Vector2(0, 0),
+            Offset = new Vector2(360, 360),
+            Rotation = _menuMoveAnim.Sample(),
+            Zoom = 1
+        };
+        Vector2 pos = new Vector2(0, -150);
+        Vector2 mPos = Raylib.GetMousePosition();
+        
+        Raylib.BeginMode2D(spin);
+        bool hovered = _menuMoveAnim.IsComplete() && Raylib.CheckCollisionPointCircle(Raylib.GetScreenToWorld2D(mPos, spin), pos, 48);
+        int rot = (int)spin.Rotation % 360 / 90;
+        if (hovered)
+        {
+            Game.HoverInteractable = true;
+            if (Raylib.IsMouseButtonPressed(MouseButton.Left))
+            {
+                RotateTo(rot);
+                if (rot == 0)
+                {
+                    if (Mixer.MusicPlaying != null)
+                    {
+                        if (Mixer.IsPaused)
+                        {
+                            Mixer.Resume();
+                        }
+                        else
+                        {
+                            Mixer.Pause();
+                        }
+                    }
+                    else
+                    {
+                        Mixer.PlayNextMusic();
+                    }
+                }
+            }
+        }
+        Resources.Sprites[!Mixer.IsPaused ? "icon_pause" : "icon_play"].DrawCentered(pos, tint: hovered ? Color.White : new Color(192, 192, 192, 255));
+        Raylib.EndMode2D();
+        if (hovered && rot == 0) ImGui.DrawTextRadial(0, -200, !Mixer.IsPaused ? "Pause" : "Play");
+        spin.Rotation += 90;
+        Raylib.BeginMode2D(spin);
+        rot = (int)spin.Rotation % 360 / 90;
+        hovered = _menuMoveAnim.IsComplete() && Raylib.CheckCollisionPointCircle(Raylib.GetScreenToWorld2D(mPos, spin), pos, 48);
+        if (hovered)
+        {
+            Game.HoverInteractable = true;
+            if (Raylib.IsMouseButtonPressed(MouseButton.Left))
+            {
+                RotateTo(rot);
+                if (rot == 0)
+                {
+                    Mixer.PlayNextMusic();
+                }
+            }
+        }
+        Resources.Sprites["icon_next"].DrawCentered(pos, tint: hovered ? Color.White : new Color(192, 192, 192, 255));
+        Raylib.EndMode2D();
+        if (hovered && rot == 0) ImGui.DrawTextRadial(0, -200, "Next");
+        spin.Rotation += 90;
+        Raylib.BeginMode2D(spin);
+        rot = (int)spin.Rotation % 360 / 90;
+        hovered = _menuMoveAnim.IsComplete() && Raylib.CheckCollisionPointCircle(Raylib.GetScreenToWorld2D(mPos, spin), pos, 48);
+        if (hovered)
+        {
+            Game.HoverInteractable = true;
+            if (Raylib.IsMouseButtonPressed(MouseButton.Left))
+            {
+                RotateTo(rot);
+                if (rot == 0)
+                {
+                    Game.ActiveScene = new GameScene();
+                }
+            }
+        }
+        Resources.Sprites["icon_charge"].DrawCentered(pos, tint: hovered ? Color.White : new Color(192, 192, 192, 255));
+        Raylib.EndMode2D();
+        if (hovered && rot == 0) ImGui.DrawTextRadial(0, -200, "Charge");
+        spin.Rotation += 90;
+        Raylib.BeginMode2D(spin);
+        rot = (int)spin.Rotation % 360 / 90;
+        hovered = _menuMoveAnim.IsComplete() && Raylib.CheckCollisionPointCircle(Raylib.GetScreenToWorld2D(mPos, spin), pos, 48);
+        if (hovered)
+        {
+            Game.HoverInteractable = true;
+            if (Raylib.IsMouseButtonPressed(MouseButton.Left))
+            {
+                RotateTo(rot);
+                if (rot == 0)
+                {
+                    Mixer.PlayDialogue(Assets.Dialogues[51]);
+                }
+            }
+        }
+        Resources.Sprites["icon_snooping"].DrawCentered(pos, tint: hovered ? Color.White : new Color(192, 192, 192, 255));
+        Raylib.EndMode2D();
+    }
+
+    private void RotateTo(int option)
+    {
+        if (option < 0) option += 4;
+        if (option == 1)
+        {
+            _menuMoveAnim = AnimCurve.NewFloat(_menuMoveAnim.Sample(), _menuMoveAnim.Sample() - 90, 0.5f, Easings.InOutSine);
+        }
+        else if (option == 2)
+        {
+            _menuMoveAnim = AnimCurve.NewFloat(_menuMoveAnim.Sample(), _menuMoveAnim.Sample() + 180, 0.5f, Easings.InOutSine);
+        }
+        else if (option == 3)
+        {
+            _menuMoveAnim = AnimCurve.NewFloat(_menuMoveAnim.Sample(), _menuMoveAnim.Sample() + 90, 0.5f, Easings.InOutSine);
+        }
     }
 }

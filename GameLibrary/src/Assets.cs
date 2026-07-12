@@ -69,6 +69,7 @@ public static class Assets
             new DialogueAsset(48, "Halfway there!"),
             new DialogueAsset(49, "Almost there!"),
             new DialogueAsset(50, "Are you there?"),
+            new DialogueAsset(51, "Ah, snooping as usual, I see."),
             new DialogueAsset(60, "Grunge? We'll clean it up."),
             new DialogueAsset(61, "A Furry message board? They won't be missed."),
             new DialogueAsset(62, "A Gaming forum? Go outside, losers!"),

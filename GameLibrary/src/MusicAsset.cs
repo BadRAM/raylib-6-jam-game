@@ -23,8 +23,6 @@ public class MusicAsset
 
     public void Update()
     {
-        float time = Raylib.GetMusicTimePlayed(Music);
-        Raylib.SetMusicVolume(Music, float.Lerp(0, 0.5f, Math.Clamp(time * 10, 0, 1)));
         Raylib.UpdateMusicStream(Music);
 
         _beatThisFrame = (int)Beat() != (int)_beatLastUpdate;

@@ -12,8 +12,6 @@ public static class Game
     public static Scene ActiveScene;
     public static bool HoverInteractable;
     public static bool DebugMode;
-    public static List<MusicAsset> Playlist;
-    public static MusicAsset? MusicPlaying;
     public static readonly Color ScreenBlack = new Color(8, 8, 8, 255);
     
     // Target Resolution: 720x720
@@ -94,11 +92,7 @@ public static class Game
         //     }
         // }
         
-        MusicPlaying?.Update();
-        if (MusicPlaying != null && !Raylib.IsMusicStreamPlaying(MusicPlaying.Music))
-        {
-            ShuffleMusic(Playlist);
-        }
+        Mixer.Update();
         
         Raylib.BeginDrawing();
         Raylib.ClearBackground(Color.Blank);
@@ -147,13 +141,13 @@ public static class Game
         }
         
         DrawRing(Time.Scaled * 2, MathF.Sin(Time.Scaled / 2f) / 2f + 0.5f);
-
+        
+        Raylib.EndMode2D();
+        
         Raylib.BeginBlendMode(BlendMode.CustomSeparate);
         Rlgl.SetBlendFactorsSeparate(Rlgl.ZERO, Rlgl.ONE, Rlgl.ONE, Rlgl.ZERO, Rlgl.FUNC_ADD, Rlgl.FUNC_ADD);
         Raylib.DrawRectangle(0, 0, 720, 720, Color.White);
         Raylib.EndBlendMode();
-        
-        Raylib.EndMode2D();
 
         if (Time.Frame == 1)
         {
@@ -181,13 +175,14 @@ public static class Game
     // angle is 0-360, tilt is 0-1
     private static void DrawRing(float angle, float tilt)
     {
-        int frame = (int)MathF.Floor((tilt % 1) * 10);
+        int frame1 = (int)MathF.Floor((tilt % 1) * 10);
+        int frame2 = Math.Min(frame1 + 1, 9);
         float subframe = ((tilt % 1) * 10) % 1;
         Vector2 screen = new Vector2(720, 720);
         
         Resources.Sprites[$"glass_shine"].DrawCentered(screen/2, screen, rotation: -40);
-        Resources.Sprites[$"ring{frame}"].DrawCentered(screen/2, screen, rotation: angle);
-        Resources.Sprites[$"ring{Math.Min(frame + 1, 9)}"].DrawCentered(screen/2, screen, rotation: angle, tint: Raylib.ColorAlpha(Color.White, subframe));
+        Resources.Sprites[$"ring{frame1}"].DrawCentered(screen/2, screen, rotation: angle);
+        Resources.Sprites[$"ring{frame2}"].DrawCentered(screen/2, screen, rotation: angle, tint: Raylib.ColorAlpha(Color.White, subframe));
         
         // ImGui.DrawTextRadial(0, -240, $"F:{frame} S:{subframe:N2} A:{angle:N0}");
     }
@@ -267,22 +262,6 @@ public static class Game
         Raylib.EndMode2D();
         _activeCamera = cam;
         Raylib.BeginMode2D(_activeCamera);
-    }
-    
-    public static void ShuffleMusic(List<MusicAsset> music)
-    {
-        Playlist = music;
-        music = new List<MusicAsset>(Playlist); // clone list so we can modify it without breaking referenced static lists.
-        if (MusicPlaying != null) music.Remove(MusicPlaying); // Prevent shuffle from picking the song that was already playing.
-
-        if (music.Count == 0) return;
-        
-        MusicPlaying?.Stop();
-        MusicPlaying = music.PickRandom();
-        MusicPlaying.Music.Looping = false;
-        MusicPlaying.Play();
-        
-        ScrollText($"Now Playing: {MusicPlaying.Title} - {MusicPlaying.ArtistName}");
     }
 
     public static Camera2D GetActiveCamera() => _activeCamera;
