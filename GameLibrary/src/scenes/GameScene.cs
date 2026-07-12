@@ -47,28 +47,51 @@ public class GameScene : Scene
         worldDef.gravity = new B2Vec2(0.0f, 0.0f);
         worldDef.hitEventThreshold = 15f;
         WorldId = b2CreateWorld(worldDef);
+        
+        if (!Assets.Dialogues[2].HasBeenPlayed)
+        {
+            Assets.Dialogues[2].PlayIfUnheard(true);
+        }
+
+        _targetScore = Game.Level.TargetScore;
+        
+        Start();
+    }
+
+    public void Start()
+    {
+        if (Mixer.IsPaused)
+        {
+            Mixer.Resume();
+        }
+
+        if (Mixer.MusicPlaying == null)
+        {
+            Mixer.PlayNextMusic();
+        }
+        
+        Assets.Dialogues[48].HasBeenPlayed = false;
+        Assets.Dialogues[49].HasBeenPlayed = false;
     }
     
     public override void Update()
     {
         Raylib.ClearBackground(Color.DarkBlue);
         
-        {
-            float height = 720 - (float)_displayedScore / _targetScore * 720;
-            Color col = Raylib.ColorAlpha(Color.SkyBlue, 128);
-            Resources.Sprites["charge_meter"].Draw(0, height, 720, 720, tint: col);
-        }
-
         if (_state == State.Draining)
         {
             BackgroundDraw.Web(1 - _drainAnim.Sample());
             BackgroundDraw.Spiral(_drainAnim.Sample());
+            if (_drainAnim.Start < _drainAnim.End)
+            {
+                BackgroundDraw.ChargeMeter(1 - _drainAnim.Sample());
+            }
         }
         else
         {
             BackgroundDraw.Web();
+            BackgroundDraw.ChargeMeter((float)_displayedScore / (float)_targetScore);
         }
-        
         
         if (Raylib.IsKeyDown(KeyboardKey.A)) Raylib.ClearBackground(new Color(32, 32, 32, 255));
         
@@ -79,7 +102,7 @@ public class GameScene : Scene
         int ballFreq = _combo >= 2 && _balls.Count < 200 ? 5 : 10;
         if (_state == State.Gaming && (Time.Frame % ballFreq == 0 || _balls.Count < 60 || Raylib.IsKeyDown(KeyboardKey.L)))
         {
-            Vector2 pos = Vector2.Normalize(Utils.RandomInsideUnitCircle(Random.Shared)) * 32f + new Vector2(36, 36);
+            Vector2 pos = Vector2.Normalize(Utils.InsideUnitCircle(Random.Shared)) * 32f + new Vector2(36, 36);
             MakeBall(pos, Ball.RandomDefaultType());
         }
         
@@ -87,13 +110,23 @@ public class GameScene : Scene
 
         B2ContactEvents contactEvents = b2World_GetContactEvents(WorldId);
 
+        List<Ball> outOfBoundsBalls = new List<Ball>();
+        
         foreach (Ball ball in _balls)
         {
             ball.Draw();
             
             Vector2 delta = new Vector2(36f, 36f) - ball.Position;
+            if (delta.Length() > 45f) outOfBoundsBalls.Add(ball);
             Vector2 g = Vector2.Normalize(delta) * 100;
             b2Body_ApplyForce(ball.Body, g.ToB2(), ball.Position.ToB2(), true);
+        }
+        
+        foreach (Ball ball in outOfBoundsBalls)
+        {
+            _score += 10 * _combo;
+            b2DestroyBody(ball.Body);
+            _balls.Remove(ball);
         }
         
         for (var i = 0; i < contactEvents.hitCount; i++)
@@ -112,6 +145,40 @@ public class GameScene : Scene
 
         if (_state == State.Gaming)
         {
+            if (Game.Level.SmallTalk != null && (float)_displayedScore / (float)_targetScore > 0.25)
+            {
+                Game.Level.SmallTalk.PlayIfUnheard();
+            }
+            if (Game.Level.SmallTalk != null && (float)_displayedScore / (float)_targetScore > 0.50)
+            {
+                Assets.Dialogues[48].PlayIfUnheard();
+            }
+            if (Game.Level.SmallTalk != null && (float)_displayedScore / (float)_targetScore > 0.90)
+            {
+                Assets.Dialogues[49].PlayIfUnheard();
+            }
+
+            if (Game.Level.Gimmick == LevelAsset.LevelGimmick.Kill)
+            {
+                Assets.Dialogues[31].PlayIfUnheard(true);
+                if ((float)_displayedScore / (float)_targetScore > 0.20)
+                {
+                    Assets.Dialogues[32].PlayIfUnheard(true);
+                }
+                if ((float)_displayedScore / (float)_targetScore > 0.40)
+                {
+                    Assets.Dialogues[34].PlayIfUnheard(true);
+                }
+                if ((float)_displayedScore / (float)_targetScore > 0.60)
+                {
+                    Assets.Dialogues[36].PlayIfUnheard(true);
+                }
+                if ((float)_displayedScore / (float)_targetScore > 0.80)
+                {
+                    Assets.Dialogues[37].PlayIfUnheard(true);
+                }
+            }
+            
             HandleInput();
             
             if (_combo > 1 && Time.Scaled - _lastClear > 3f)
@@ -145,14 +212,7 @@ public class GameScene : Scene
         {
             if (_balls.Count == 0 && _drainAnim.IsComplete())
             {
-                if (_drainAnim.Sample() == 0)
-                {
-                    _state = State.Gaming;
-                }
-                else
-                {
-                    _drainAnim = AnimCurve.NewFloat(1, 0, 0.5f, Easings.InQuad);
-                }
+                Game.Level.TargetReachedAction.Invoke();
             }
 
             
@@ -182,8 +242,8 @@ public class GameScene : Scene
 
         _scoreAnims.RemoveAll(s => s.IsComplete());
 
-        if (_displayedScore < _score - 6000) _displayedScore += 100;
-        if (_displayedScore > _score) _displayedScore -= 100;
+        if (_displayedScore < _score - 3000) _displayedScore += 200;
+        if (_displayedScore > _score) _displayedScore -= 500;
         if (_displayedScore < _score) _displayedScore += 10;
         if (!Game.IsScrolling()) ImGui.DrawTextRadial(0, -280, $"Score: {_displayedScore}");
         // ImGui.DrawTextRadial(0, -240, $"Balls: {_balls.Count}");
@@ -208,9 +268,9 @@ public class GameScene : Scene
         {
             List<Ball> mergeBalls = MergeBalls(hoveredBall, out makeBomb);
 
-            if (Raylib.IsKeyPressed(KeyboardKey.B))
+            if (mergeBalls.Count >= 100)
             {
-                hoveredBall.BallType = Ball.Type.Bomb;
+                Assets.Dialogues[46].PlayIfUnheard();
             }
 
             if (hoveredBall.BallType == Ball.Type.Bomb)
@@ -227,8 +287,8 @@ public class GameScene : Scene
                     
                     B2ExplosionDef explode = b2DefaultExplosionDef();
                     explode.position = hoveredBall.Position.ToB2();
-                    explode.radius = 15;
-                    explode.impulsePerLength = 75;
+                    explode.radius = 20;
+                    explode.impulsePerLength = 200;
                     
                     b2World_Explode(WorldId, explode);
                     
@@ -242,6 +302,7 @@ public class GameScene : Scene
                 if (makeBomb)
                 {
                     MakeBall(hoveredBall.Position, Ball.Type.Bomb);
+                    if (!Assets.Dialogues[5].PlayIfUnheard()) Assets.Dialogues[44].Play();
                 }
                 
                 if (hoveredBall.BallType is Ball.Type.BlueCrystal or Ball.Type.YellowCrystal or Ball.Type.PurpleCrystal or Ball.Type.RedCrystal)
@@ -272,6 +333,9 @@ public class GameScene : Scene
             }
 
             _combo++;
+            if (_combo == 3 && !Mixer.IsDialoguePlaying()) Assets.Dialogues[6].PlayIfUnheard();
+            if (ballsToMerge.Count > 50) Assets.Dialogues[43].PlayIfUnheard();
+            if (ballsToMerge.Count > 25 && Random.Shared.NextSingle() < 0.25f) Assets.Dialogues[new List<int>(){40, 41, 42}.PickRandom()].Play();
             Resources.Sounds[$"match{Math.Clamp(_combo, 1, 14)}"].Play();
             int mergeScore = ballsToMerge.Count * _combo * 10;
             _score += mergeScore;
@@ -298,9 +362,10 @@ public class GameScene : Scene
         
         while (_combo >= 8)
         {
-            Vector2 pos = Vector2.Normalize(Utils.RandomInsideUnitCircle(Random.Shared)) * 32f + new Vector2(36, 36);
+            Vector2 pos = Vector2.Normalize(Utils.InsideUnitCircle(Random.Shared)) * 32f + new Vector2(36, 36);
             MakeBall(pos, new []{Ball.Type.BlueCrystal, Ball.Type.PurpleCrystal, Ball.Type.YellowCrystal, Ball.Type.RedCrystal}[Random.Shared.Next(4)]);
             _combo -= 4;
+            if (Assets.Dialogues[4].PlayIfUnheard() && Random.Shared.NextSingle() < 0.5f) Assets.Dialogues[new List<int>(){47, 45}.PickRandom()].Play();
         }
         
         _combo = 0;
@@ -310,6 +375,7 @@ public class GameScene : Scene
     {
         EndCombo();
         _score = 0;
+        _displayedScore = 0;
         _state = State.Draining;
         _drainAnim = AnimCurve.NewFloat(0, 1, 2, Easings.OutQuad);
     }
@@ -476,7 +542,7 @@ public class GameScene : Scene
             }
             baseSprite.DrawCentered(pos, size, tint: col);
             if (spinPattern != null) spinPattern.DrawCentered(pos, size, rotation: Rotation, tint: Color.Lerp(col, Color.White, Easings.FullSine(Mixer.Beat() % 1f)/4f+0.5f));
-            specular.DrawCentered(pos, size, tint: col);
+            specular.DrawCentered(pos, size);
         }
 
     }

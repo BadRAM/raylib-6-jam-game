@@ -10,6 +10,8 @@ public static class Game
     public static string Dir = "";
     public static Queue<Action> LateActions = new Queue<Action>(); // LateActions are dequeued and invoked after everything else has updated.
     public static Scene ActiveScene;
+    public static LevelAsset Level => Assets.Levels[LevelIndex];
+    public static int LevelIndex;
     public static bool HoverInteractable;
     public static bool DebugMode;
     public static readonly Color ScreenBlack = new Color(8, 8, 8, 255);
@@ -25,6 +27,10 @@ public static class Game
     private static RenderTexture2D _portalViewRenderTarget;
     public static AnimCurve<float> PortalSize = new AnimCurve<float>(0);
     public static Sprite PortalView;
+
+    public static bool FireLaser;
+    private static Vector2 _deviceShake;
+    public static float LaserGlare;
     
     private static AnimCurve<Camera2D> _deviceCameraAnim = new AnimCurve<Camera2D>(new Camera2D(Vector2.Zero, Vector2.Zero, 0, 1));
     
@@ -125,6 +131,17 @@ public static class Game
         Raylib.EndMode2D();
         Raylib.EndTextureMode();
         _activeCamera = _defaultCamera;
+
+        _deviceCameraAnim.End.Offset -= _deviceShake;
+        _deviceShake = Vector2.Zero;
+        if (FireLaser) 
+        {
+            _deviceShake = Random.Shared.InsideUnitCircle() * 4;
+            _deviceCameraAnim.End.Offset += _deviceShake;
+            Vector2 laserShake = Random.Shared.InsideUnitCircle() * 4;
+            Resources.Sprites["laser_halo"].Draw(laserShake, tint: Raylib.ColorFromHSV((Mixer.Beat()/2 * 360f) % 360f, 1f, 1f));
+            Resources.Sprites["laser_core"].Draw(laserShake);
+        }
         
         Raylib.BeginMode2D(_deviceCameraAnim.Sample());
         
@@ -161,6 +178,10 @@ public static class Game
 
     public static void MoveDevice(Vector2 center, float zoom, float duration, Func<float, float>? easing = null)
     {
+        if (duration < 4)
+        {
+            Resources.Sounds["whoosh"].Play();
+        }
         _deviceCameraAnim = AnimCurve.NewCamera2D
         (
             _deviceCameraAnim.Sample(),
@@ -203,6 +224,8 @@ public static class Game
         
         Raylib.BeginTextureMode(_portalViewRenderTarget);
             PortalView.Draw(0, 0);
+            Resources.Sprites["laser_splash"].DrawCentered(360, 360, Vector2.One * LaserGlare * 1440, tint: Raylib.ColorFromHSV((Mixer.Beat()/2 * 360f) % 360f, 1f, 1f));
+            Resources.Sprites["laser_splash"].DrawCentered(360, 360, Vector2.One * LaserGlare * 720);
             Raylib.BeginBlendMode(BlendMode.CustomSeparate);
             Rlgl.SetBlendFactorsSeparate(Rlgl.ZERO, Rlgl.ONE, Rlgl.ONE, Rlgl.ZERO, Rlgl.FUNC_ADD, Rlgl.FUNC_ADD);
             Resources.Sprites["mask"].DrawCentered(360, 360, viewSize);
@@ -225,6 +248,7 @@ public static class Game
 
         Rectangle viewSrc = new Rectangle(360 - viewSize.X/2 + 1, 360 - viewSize.Y/2 + 1, viewSize.X - 2, -viewSize.Y + 2);
         Rectangle viewDst = new Rectangle(360 - viewSize.X/2 + 1, 360 - viewSize.Y/2 + 1, viewSize.X - 2,  viewSize.Y - 2);
+        if (FireLaser) viewDst.Position += Random.Shared.InsideUnitCircle() * 10;
         Raylib.DrawTexturePro(_portalViewRenderTarget.Texture, viewSrc, viewDst, Vector2.Zero, 0, Color.White);
         Rectangle edgeSrc = new Rectangle(360 - size.X/2 + 1, 360 - size.Y/2 + 1, size.X - 2, -size.Y + 2);
         Rectangle edgeDst = new Rectangle(360 - size.X/2 + 1, 360 - size.Y/2 + 1, size.X - 2,  size.Y - 2);
@@ -241,6 +265,11 @@ public static class Game
     }
 
     public static bool IsScrolling() => _scrollerTexts.Count > 0;
+
+    public static void ClearTextScrolls()
+    {
+        _scrollerTexts.Clear();
+    }
 
     public static Vector2 GetDevicePos()
     {
@@ -263,8 +292,10 @@ public static class Game
         _activeCamera = cam;
         Raylib.BeginMode2D(_activeCamera);
     }
-
+    
     public static Camera2D GetActiveCamera() => _activeCamera;
-
     public static Vector2 GetCursorPos() => Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), _activeCamera);
+    
+    public static void OpenPortal()  => PortalSize = AnimCurve.NewFloat(0, 720, 1, Easings.OutQuart);
+    public static void ClosePortal() => PortalSize = AnimCurve.NewFloat(720, 0, 1, Easings.InQuart);
 }

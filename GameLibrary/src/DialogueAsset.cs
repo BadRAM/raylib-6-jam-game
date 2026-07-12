@@ -18,10 +18,20 @@ public class DialogueAsset
     
     public void Play()
     {
-        Game.ScrollText(Text);
-        Sound.Play(volume: 1f);
         HasBeenPlayed = true;
+        Mixer.PlayDialogue(this);
     }
 
+    public bool PlayIfUnheard(bool important = false)
+    {
+        if (!important && (Mixer.IsDialoguePlaying() || Game.Level.Gimmick == LevelAsset.LevelGimmick.Kill)) return false;
+        if (!HasBeenPlayed)
+        {
+            Play();
+            return true;
+        }
+        return false;
+    }
+    
     public bool IsPlaying() => Sound.IsPlaying();
 }

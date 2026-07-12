@@ -47,7 +47,7 @@ public static class Utils
         return list[random.Next(list.Count)];
     }
     
-    public static Vector2 RandomInsideUnitCircle(this Random random)
+    public static Vector2 InsideUnitCircle(this Random random)
     {
         float theta = random.NextSingle() * 2 * Single.Pi;
         return new Vector2(MathF.Cos(theta), MathF.Sin(theta)) * MathF.Sqrt(random.NextSingle());

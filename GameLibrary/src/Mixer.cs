@@ -8,18 +8,22 @@ public static class Mixer
     public static bool IsPaused = false;
     public static List<MusicAsset> Playlist = new List<MusicAsset>();
     public static MusicAsset? MusicPlaying;
-    private static AnimCurve<float> _musicFade = new AnimCurve<float>(0.5f);
+    private static AnimCurve<float> _musicFade = new AnimCurve<float>(FullVolume);
     public static List<DialogueAsset> DialogueQueue = new List<DialogueAsset>();
     public static DialogueAsset? DialoguePlaying;
 
+    private const float FullVolume = 0.5f;
+    private const float ReducedVolume = 0.1f;
+
     static Mixer()
     {
-        Playlist = new List<MusicAsset>()
-        {
-            Assets.Musics["null_function"],
-            Assets.Musics["av_adr"],
-            Assets.Musics["andreas_v_avalanche"],
-        };
+        // Playlist = new List<MusicAsset>()
+        // {
+        //     Assets.Musics["null_function"],
+        //     Assets.Musics["av_adr"],
+        //     Assets.Musics["andreas_v_avalanche"],
+        // };
+        Playlist = Assets.Musics.Values.ToList();
     }
 
     public static void Update()
@@ -27,15 +31,26 @@ public static class Mixer
         if (DialoguePlaying != null && !DialoguePlaying.IsPlaying())
         {
             DialoguePlaying = null;
-            _musicFade = AnimCurve.NewFloat(_musicFade.Sample(), 0.5f, 1);
+            _musicFade = AnimCurve.NewFloat(_musicFade.Sample(), FullVolume, 1);
         }
 
         if (DialoguePlaying == null && DialogueQueue.Count > 0)
         {
-            DialoguePlaying = DialogueQueue[0];
-            DialoguePlaying.Play();
-            DialogueQueue.RemoveAt(0);
-            _musicFade = AnimCurve.NewFloat(_musicFade.Sample(), 0.2f, 1);
+            if (_musicFade.IsComplete())
+            {
+                if (_musicFade.Sample() > ReducedVolume + 0.1f)
+                {
+                    _musicFade = AnimCurve.NewFloat(_musicFade.Sample(), ReducedVolume, 0.5f);
+                }
+                else
+                {
+                    DialoguePlaying = DialogueQueue[0];
+                    Game.ClearTextScrolls();
+                    Game.ScrollText(DialoguePlaying.Text);
+                    DialoguePlaying.Sound.Play(volume: 1f);
+                    DialogueQueue.RemoveAt(0);
+                }
+            }
         }
         
         if (MusicPlaying != null)
@@ -58,11 +73,11 @@ public static class Mixer
     
     public static void PlayMusic(MusicAsset music)
     {
-        _musicFade = AnimCurve.NewFloat(0, 0.5f, 1);
+        _musicFade = AnimCurve.NewFloat(0, FullVolume, 1);
         MusicPlaying?.Stop();
         MusicPlaying = music;
         MusicPlaying.Play();
-        Game.ScrollText($"Now Playing: {MusicPlaying.Title} - {MusicPlaying.ArtistName}");
+        Game.ScrollText($"Now Playing {MusicPlaying.ArtistName}: {MusicPlaying.Title}");
     }
 
     public static void Pause()
@@ -88,7 +103,22 @@ public static class Mixer
 
     public static void PlayDialogue(DialogueAsset dialogue)
     {
+        dialogue.HasBeenPlayed = true;
         DialogueQueue.Add(dialogue);
+    }
+
+    public static bool IsDialoguePlaying()
+    {
+        return (DialoguePlaying != null) || (DialogueQueue.Count > 0);
+    }
+    
+    public static void ClearDialogue()
+    {
+        if (DialoguePlaying == null) return;
+        Raylib.StopSound(DialoguePlaying.Sound.GetSound());
+        Game.ClearTextScrolls();
+        DialoguePlaying = null;
+        DialogueQueue.Clear();
     }
 
     public static float GetMusicVolume() => _musicFade.Sample();

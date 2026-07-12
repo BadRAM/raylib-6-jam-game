@@ -90,4 +90,12 @@ public static class BackgroundDraw
         t = Easings.OutQuad(t);
         Resources.Sprites["circle_soft"].DrawCentered(new Vector2(360, 360), new Vector2(820, 820) * t, tint: Raylib.ColorAlpha(Color.White, 1 - t));
     }
+
+    public static void ChargeMeter(float t)
+    {
+        float height = 720 - t * 720;
+        Color col = Raylib.ColorAlpha(Color.SkyBlue, 128);
+        Resources.Sprites["charge_meter"].Draw(0, height, 720, 720, tint: col);
+
+    }
 }

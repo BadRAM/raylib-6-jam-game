@@ -15,21 +15,27 @@ public class MainMenu : Scene
     {
         Mixer.Playlist = Assets.Musics.Values.ToList();
         if (fromBlack) _loadAnim = AnimCurve.NewFloat(0, 1, 1);
-        Mixer.PlayDialogue(Assets.Dialogues[1]);
+        Assets.Dialogues[1].PlayIfUnheard();
+
+        if (Game.LevelIndex == 5)
+        {
+            Assets.Dialogues[30].PlayIfUnheard(true);
+        }
     }
     
     public override void Update()
     {
-        if (Raylib.IsKeyPressed(KeyboardKey.One  )) Game.MoveDevice(new Vector2(360, 360), 1,     1);
-        if (Raylib.IsKeyPressed(KeyboardKey.Two  )) Game.MoveDevice(new Vector2( 90,  90), 0.25f, 1);
-        if (Raylib.IsKeyPressed(KeyboardKey.Three)) Game.MoveDevice(new Vector2( 90, 630), 0.25f, 1);
-        if (Raylib.IsKeyPressed(KeyboardKey.Four )) Game.MoveDevice(new Vector2(180, 540), 0.5f,  1);
-        if (Raylib.IsKeyPressed(KeyboardKey.Five )) Game.MoveDevice(new Vector2(240, 480), 0.66f,  1);
-        if (Raylib.IsKeyPressed(KeyboardKey.G    )) Game.ActiveScene = new GameScene();
-        if (Raylib.IsKeyPressed(KeyboardKey.K    )) Game.PortalSize = AnimCurve.NewFloat(0, 720, 1, Easings.OutQuart);
-        if (Raylib.IsKeyPressed(KeyboardKey.L    )) Game.PortalSize = AnimCurve.NewFloat(720, 0, 1, Easings.InQuart);
+        // if (Raylib.IsKeyPressed(KeyboardKey.One  )) Game.MoveDevice(new Vector2(360, 360), 1,     1);
+        // if (Raylib.IsKeyPressed(KeyboardKey.Two  )) Game.MoveDevice(new Vector2( 90,  90), 0.25f, 1);
+        // if (Raylib.IsKeyPressed(KeyboardKey.Three)) Game.MoveDevice(new Vector2( 90, 630), 0.25f, 1);
+        // if (Raylib.IsKeyPressed(KeyboardKey.Four )) Game.MoveDevice(new Vector2(180, 540), 0.5f,  1);
+        // if (Raylib.IsKeyPressed(KeyboardKey.Five )) Game.MoveDevice(new Vector2(240, 480), 0.66f,  1);
+        // if (Raylib.IsKeyPressed(KeyboardKey.G    )) Game.ActiveScene = new GameScene();
+        if (Raylib.IsKeyPressed(KeyboardKey.H    )) Game.Level.TargetReachedAction.Invoke();
+        // if (Raylib.IsKeyPressed(KeyboardKey.K    )) Game.OpenPortal();
+        // if (Raylib.IsKeyPressed(KeyboardKey.L    )) Game.ClosePortal();
 
-        if (Mixer.DialoguePlaying == null) Mixer.AutoPlay = true;
+        if (!Mixer.IsDialoguePlaying()) Mixer.AutoPlay = true;
         
         Raylib.ClearBackground(Color.DarkBlue);
         
@@ -156,7 +162,7 @@ public class MainMenu : Scene
                 RotateTo(rot);
                 if (rot == 0)
                 {
-                    Mixer.PlayDialogue(Assets.Dialogues[51]);
+                    Assets.Dialogues[51].PlayIfUnheard();
                 }
             }
         }

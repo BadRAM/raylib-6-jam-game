@@ -7,8 +7,9 @@ public static class Assets
 {
     public static Dictionary<string, MusicAsset> Musics = new Dictionary<string, MusicAsset>();
     public static Dictionary<int, DialogueAsset> Dialogues = new Dictionary<int, DialogueAsset>();
+    public static List<LevelAsset> Levels;
     
-
+    
     public static void Load()
     {
         Musics = new Dictionary<string, MusicAsset>()
@@ -16,16 +17,23 @@ public static class Assets
             {"null_function", new MusicAsset(Resources.Musics["null_function"], "Null Function", "CongusBongus", 162, 0.1f)},
             {"av_adr", new MusicAsset(Resources.Musics["av_adr"], "A Different Reality (Lagoona rmx)", "Andreas Viklund", 145, 0.076f)},
             {"andreas_v_avalanche", new MusicAsset(Resources.Musics["andreas_v_avalanche"], "Avalanche", "Andreas Viklund", 140, 0.166f)},
+            {"kicking_it_powerful_null1024", new MusicAsset(Resources.Musics["kicking_it_powerful_null1024"], "kicking_it_powerful", "null1024", 200, 0.166f)},
+            {"history_of_time_tsec_and_andreas_viklund", new MusicAsset(Resources.Musics["history_of_time_tsec_and_andreas_viklund"], "History of time.....", "TSEC & Andreas Viklund", 148, 0.166f)},
+            {"system_demon_congusbongus", new MusicAsset(Resources.Musics["system_demon_congusbongus"], "System Daemon", "congusbongus", 170, 0.166f)},
+            {"incongruence_djego_flochs", new MusicAsset(Resources.Musics["incongruence_djego_flochs"], "Incongruence", "Djego Flochs", 132, 0.166f)},
+            {"daydreamer_andreas_viklund", new MusicAsset(Resources.Musics["daydreamer_andreas_viklund"], "Daydreamer", "Andreas Viklund", 135, 0.166f)},
+            {"core_meltdown_andreas_viklund", new MusicAsset(Resources.Musics["core_meltdown_andreas_viklund"], "-=Core Meltdown=-", "Andreas Viklund", 142, 0.166f)},
+            {"advanced_impulse_system_null1024", new MusicAsset(Resources.Musics["advanced_impulse_system_null1024"], "advanced_impulse_system", "null1024", 125, 0.166f)},
         };
-
+        
         List<DialogueAsset> dialogues = new List<DialogueAsset>()
         {
-            new DialogueAsset(1,  "Hi! I'm Calypso, your new internet curation software. Let's make the web ready for Y2K!"),
-            new DialogueAsset(2,  "I need coherence energy to operate. Click groups of four or more orbs until my charge meter is filled."),
+            new DialogueAsset(1,  "Hi! I'm Calypso, your new internet curation software. Let's make the web ready for Y2K!"), //
+            new DialogueAsset(2,  "I need coherence energy to operate. Click groups of four or more orbs until my charge meter is filled."), //
             new DialogueAsset(3,  "Build a combo by only matching groups bigger than your current multiplier."),
-            new DialogueAsset(4,  "Big combos can make a Chroma Crystal! Tap it to remove all orbs of a color."),
-            new DialogueAsset(5,  "You made a hex bomb! Tap it again to clear the whole screen!"),
-            new DialogueAsset(6,  "Triple combo. Keep it going by matching larger and larger groups."),
+            new DialogueAsset(4,  "Big combos can make a Chroma Crystal! Tap it to remove all orbs of a color."), //
+            new DialogueAsset(5,  "You made a hex bomb! Tap it again to clear the whole screen!"), //
+            new DialogueAsset(6,  "Triple combo. Keep it going by matching larger and larger groups."), //
             new DialogueAsset(7,  "I'm fully charged, opening a firewall tunnel."),
             new DialogueAsset(8,  "Scanning... Eww, a horse girl blog? That's so 90s, let's clean it up."),
             new DialogueAsset(9,  "It sure feels nice to take junk like that offline. Basic web design like that has no place in the 21st century."),
@@ -62,18 +70,18 @@ public static class Assets
             new DialogueAsset(41, "Wow!"),
             new DialogueAsset(42, "Good one!"),
             new DialogueAsset(43, "Wow, that's a lot!"),
-            new DialogueAsset(44, "Hex Bomb! Nice."),
+            new DialogueAsset(44, "Hex Bomb! Nice."), //
             new DialogueAsset(45, "Chroma Crystal! Cool!"),
-            new DialogueAsset(46, "The suspense is killing me! Just match it already!"),
+            new DialogueAsset(46, "The suspense is killing me! Just match it already!"), //
             new DialogueAsset(47, "Nice combo!"),
             new DialogueAsset(48, "Halfway there!"),
             new DialogueAsset(49, "Almost there!"),
             new DialogueAsset(50, "Are you there?"),
-            new DialogueAsset(51, "Ah, snooping as usual, I see."),
+            new DialogueAsset(51, "Ah, snooping as usual, I see."), //
             new DialogueAsset(60, "Grunge? We'll clean it up."),
             new DialogueAsset(61, "A Furry message board? They won't be missed."),
             new DialogueAsset(62, "A Gaming forum? Go outside, losers!"),
-            new DialogueAsset(63, "Wow, this one's *way* behind the times. [medieval history blog]"),
+            new DialogueAsset(63, "Wow, this one's *way* behind the times."),
             new DialogueAsset(64, "I'm the last flying saucer you'll *ever* see! [UFO website]"),
             new DialogueAsset(65, "Ugh, I can smell it from here."),
             new DialogueAsset(66, "Autoplaying music? Not on my watch!"),
@@ -83,7 +91,18 @@ public static class Assets
         {
             Dialogues.Add(dialogue.Index, dialogue);
         }
-
+        
+        Levels = new List<LevelAsset>()
+        {
+            new LevelAsset(20000, null, () => { Game.ActiveScene = new LaserScene(Dialogues[7],  Dialogues[8],  Resources.Sprites["site1"]); }),
+            new LevelAsset(25000, Dialogues[9],  () => { Game.ActiveScene = new LaserScene(Dialogues[10], Dialogues[11], Resources.Sprites["site2"]); }),
+            new LevelAsset(30000, Dialogues[12], () => { Game.ActiveScene = new LaserScene(Dialogues[13], Dialogues[63], Resources.Sprites["site3"]); }),
+            new LevelAsset(35000, Dialogues[15], () => { Game.ActiveScene = new LaserFakeoutScene(Dialogues[16], Dialogues[17], Dialogues[18], Resources.Sprites["site5"], Resources.Sprites["site4"]); }),
+            new LevelAsset(40000, Dialogues[19], () => { Game.ActiveScene = new LaserScene(Dialogues[20], Dialogues[21], Resources.Sprites["site6"]); }),
+            // new LevelAsset(20000, Dialogues[23], () => { Game.ActiveScene = new LaserScene(Dialogues[24], Dialogues[30], Resources.Sprites["site1"]); }, LevelAsset.LevelGimmick.KeepCharging),
+            new LevelAsset(60000, Dialogues[23], () => { Game.ActiveScene = new EndingScene(); }, LevelAsset.LevelGimmick.Kill),
+        };
+        
         Console.WriteLine("All Assets loaded OK!");
     }
 }
