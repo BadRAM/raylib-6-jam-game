@@ -1,2 +1,2 @@
-This is the source to Disaster aboard EFF Mill Bay, a game made for Eye Jam 2  
-https://badram.itch.io/disaster-aboard-eff-mill-bay
+This is the source to "Calypso '06", a game made for Raylib 6.x Jam
+https://badram.itch.io/calypso

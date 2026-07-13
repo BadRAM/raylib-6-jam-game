@@ -5,25 +5,25 @@ namespace GameLibrary;
 
 public static class BackgroundDraw
 {
-    // public static void Waveform()
-    // {
-    //     unsafe
-    //     {
-    //         Vector2 pos = new Vector2(0, 360);
-    //         Vector2 lastPos = pos;
-    //         for (int i = 0; i < 360; i++)
-    //         {
-    //             IntPtr rAudioBufferPtr = Game.MusicPlaying.Music.Stream.Buffer;
-    //             var dataBufferPtr = *(IntPtr*)(rAudioBufferPtr + 368);
-    //             int dataBufferIndex = Math.Min(4096 * 4, i * 4 * 2 * 4);
-    //             float waveData = *(float*)(dataBufferPtr + dataBufferIndex);
-    //             float waveSample = waveData;
-    //             pos = new Vector2(2 * i, MathF.Max(0, Easings.HalfSine(i / 360f)) * waveSample * 80f + 360f);
-    //             Raylib.DrawLineEx(pos, lastPos, 2, Color.RayWhite);
-    //             lastPos = pos;
-    //         }
-    //     }
-    // }
+    public static void Waveform()
+    {
+        unsafe
+        {
+            Vector2 pos = new Vector2(0, 360);
+            Vector2 lastPos = pos;
+            for (int i = 0; i < 360; i++)
+            {
+                IntPtr rAudioBufferPtr = Mixer.MusicPlaying.Music.Stream.Buffer;
+                var dataBufferPtr = *(IntPtr*)(rAudioBufferPtr + 368);
+                int dataBufferIndex = Math.Min(4096 * 4, i * 4 * 2 * 4);
+                float waveData = *(float*)(dataBufferPtr + dataBufferIndex);
+                float waveSample = waveData;
+                pos = new Vector2(2 * i, MathF.Max(0, Easings.HalfSine(i / 360f)) * waveSample * 80f + 360f);
+                Raylib.DrawLineEx(pos, lastPos, 2, Color.RayWhite);
+                lastPos = pos;
+            }
+        }
+    }
     
     public static void Waveform1()
     {
