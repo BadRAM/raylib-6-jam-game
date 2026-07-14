@@ -45,7 +45,7 @@ public class MainMenu : Scene
         
         BackgroundDraw.CirclePulse(Math.Max(0, Mixer.Beat() / 4 - 0.5f) % 1);
         BackgroundDraw.CirclePulse(Math.Max(0, Mixer.Beat() / 4 - 0.0f) % 1);
-        BackgroundDraw.Waveform2();
+        BackgroundDraw.Waveform4();
         
         Resources.Sprites["cd"].DrawCentered(360, 360, Resources.Sprites["cd"].Size/2, rotation: Time.Scaled * 60);
         
