@@ -194,14 +194,14 @@ public class GameScene : Scene
             {
                 EndCombo();
             }
-        
+            
             if (_balls.Count > 350 && Time.Scaled % 1f < 0.5f)
             {
                 Color col = new Color(255, 0, 0, _balls.Count - 300);
                 Resources.Sprites["radial_inverted"].Draw(0, 0, 720, 720, tint: col);
                 ImGui.DrawTextCentered("Overflow\nImminent", 360, 360, 40);
             }
-        
+            
             if (_balls.Count > 400)
             {
                 _score = 0;
@@ -356,7 +356,7 @@ public class GameScene : Scene
             Resources.Sounds[$"match{Math.Clamp(_combo, 1, 14)}"].Play();
             int mergeScore = ballsToMerge.Count * _combo * 10;
             _score += mergeScore;
-            _scoreAnims.Add(new ScoreAnim($"{ballsToMerge.Count}0x{_combo} = {mergeScore}", Raylib.GetMousePosition(), ballsToMerge));
+            _scoreAnims.Add(new ScoreAnim($"{ballsToMerge.Count}0x{_combo} = {mergeScore}", Game.GetCursorPosOnDevice(), ballsToMerge));
         }
         
         foreach (Ball ball in ballsToMerge)
@@ -401,7 +401,7 @@ public class GameScene : Scene
     {
         maxDistance /= 10;
         KeyValuePair<Ball?, float> nearestBall = new KeyValuePair<Ball, float>(null, maxDistance);
-        Vector2 cursorPos = Raylib.GetMousePosition() / 10f;
+        Vector2 cursorPos = Game.GetCursorPosOnDevice() / 10f;
         foreach (Ball ball in _balls)
         {
             B2Vec2 pos = b2Body_GetWorldCenterOfMass(ball.Body);

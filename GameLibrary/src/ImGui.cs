@@ -81,25 +81,4 @@ public static class ImGui
         Vector2 size = Raylib.MeasureTextEx(_defaultFont, text, _defaultFontSize, _defaultTextSpacing);
         return (180 * size.X) / (MathF.PI * radius);
     }
-    
-    public static bool Button(string label, int x, int y)
-    {
-        Rectangle rect = new Rectangle(x, y, 100, 30);
-        bool hovered = Raylib.CheckCollisionPointRec(Game.GetCursorPos(), rect);
-        bool pressed = hovered && Raylib.IsMouseButtonDown(MouseButton.Left);
-        Color color = hovered ? (pressed ? Color.DarkGray : Color.LightGray) : Color.Gray;
-        
-        if (hovered && Raylib.IsMouseButtonPressed(MouseButton.Left)) _buttonPress.Play();
-        
-        Raylib.DrawRectangleRec(rect, color);
-        DrawText(label, x + 5, y + 5);
-
-        if (hovered && Raylib.IsMouseButtonReleased(MouseButton.Left))
-        {
-            _buttonRelease.Play();
-            return true;
-        }
-
-        return false;
-    }
 }

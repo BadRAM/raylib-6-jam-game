@@ -40,9 +40,9 @@ public class IntroScene : Scene
         if (_step == 0)
         {
             if (Raylib.CheckCollisionPointRec(Raylib.GetMousePosition(), new Rectangle(287, 410, 146, 50)) ||
-                Raylib.CheckCollisionPointCircle(Raylib.GetMousePosition(), Game.GetDevicePos(), 360f * 0.15f))
+                Raylib.CheckCollisionPointCircle(Game.GetCursorPosOnDevice(), new Vector2(360, 360), 360))
             {
-                Game.HoverInteractable = true;
+                Game.MouseCursor = MouseCursor.PointingHand;
                 if (Raylib.IsMouseButtonPressed(MouseButton.Left))
                 {
                     _step++;
@@ -57,7 +57,7 @@ public class IntroScene : Scene
             if (Raylib.CheckCollisionPointRec(Raylib.GetMousePosition(), new Rectangle(287, 410, 146, 50)) ||
                 Raylib.CheckCollisionPointCircle(Raylib.GetMousePosition(), Game.GetDevicePos(), 360f * 0.15f))
             {
-                Game.HoverInteractable = true;
+                Game.MouseCursor = MouseCursor.PointingHand;
             }
             
             if (_stepProgress.IsComplete() || cheat)

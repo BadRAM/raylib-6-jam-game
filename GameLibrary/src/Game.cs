@@ -12,7 +12,7 @@ public static class Game
     public static Scene ActiveScene;
     public static LevelAsset Level => Assets.Levels[LevelIndex];
     public static int LevelIndex;
-    public static bool HoverInteractable;
+    public static MouseCursor MouseCursor;
     public static bool DebugMode;
     public static readonly Color ScreenBlack = new Color(8, 8, 8, 255);
     
@@ -78,7 +78,18 @@ public static class Game
         
         // if (Raylib.IsKeyPressed(KeyboardKey.F3)) DebugMode = !DebugMode;
         
-        HoverInteractable = false;
+        MouseCursor = MouseCursor.Default;
+        Vector2 mPos = GetCursorPosOnDevice();
+        if (!Raylib.CheckCollisionPointCircle(mPos, new Vector2(360, 360), 360))
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                if (Raylib.CheckCollisionPointRec(Raylib.GetMousePosition(), new Rectangle(0, 640 + 23 * i, 720, 19)))
+                {
+                    MouseCursor = MouseCursor.IBeam;
+                }
+            }
+        }
         // if (!Raylib.CheckCollisionPointCircle(Raylib.GetMousePosition(), new Vector2(360, 360), 360))
         // {
         //     // :'(
@@ -173,7 +184,7 @@ public static class Game
         
         Raylib.EndDrawing();
         
-        Raylib.SetMouseCursor(HoverInteractable ? MouseCursor.PointingHand : MouseCursor.Default);
+        Raylib.SetMouseCursor(MouseCursor);
     }
 
     public static void MoveDevice(Vector2 center, float zoom, float duration, Func<float, float>? easing = null)
@@ -196,6 +207,7 @@ public static class Game
     // angle is 0-360, tilt is 0-1
     private static void DrawRing(float angle, float tilt)
     {
+        tilt = Math.Clamp(tilt, 0.01f, 0.99f);
         int frame1 = (int)MathF.Floor((tilt % 1) * 10);
         int frame2 = Math.Min(frame1 + 1, 9);
         float subframe = ((tilt % 1) * 10) % 1;
@@ -292,9 +304,13 @@ public static class Game
         _activeCamera = cam;
         Raylib.BeginMode2D(_activeCamera);
     }
+
+    public static Vector2 GetCursorPosOnDevice()
+    {
+        return Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), _deviceCameraAnim.Sample());
+    }
     
     public static Camera2D GetActiveCamera() => _activeCamera;
-    public static Vector2 GetCursorPos() => Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), _activeCamera);
     
     public static void OpenPortal()  => PortalSize = AnimCurve.NewFloat(0, 720, 1, Easings.OutQuart);
     public static void ClosePortal() => PortalSize = AnimCurve.NewFloat(720, 0, 1, Easings.InQuart);

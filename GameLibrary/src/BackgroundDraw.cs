@@ -9,7 +9,7 @@ public static class BackgroundDraw
     private const int RingSize = 360;
     private static float[] _waveformRing = new float[RingSize];
     private static int _ringPos = 0;
-
+    
     static BackgroundDraw()
     {
         Raylib.AttachAudioMixedProcessor(new AudioCallback<float>(buffer =>
@@ -130,6 +130,5 @@ public static class BackgroundDraw
         float height = 720 - t * 720;
         Color col = Raylib.ColorAlpha(Color.SkyBlue, 128);
         Resources.Sprites["charge_meter"].Draw(0, height, 720, 720, tint: col);
-
     }
 }
