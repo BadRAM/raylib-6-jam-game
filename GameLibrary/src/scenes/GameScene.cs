@@ -26,13 +26,12 @@ public class GameScene : Scene
     
     private int _score;
     private int _displayedScore;
-    private int _targetScore = 20000;
     private int _combo;
     private float _lastClear;
     private List<ScoreAnim> _scoreAnims = new List<ScoreAnim>();
     private AnimCurve<float> _drainAnim = new AnimCurve<float>(1);
+    private AnimCurve<float> _instructionTextRadius = new AnimCurve<float>(-280);
     private bool _overflow;
-    private bool _endless;
 
     private State _state = State.Gaming;
     
@@ -42,26 +41,16 @@ public class GameScene : Scene
         Draining
     }
     
-    public GameScene(bool endlessMode = false)
+    public GameScene()
     {
-        _endless = endlessMode;
         B2WorldDef worldDef = b2DefaultWorldDef();
         
         worldDef.gravity = new B2Vec2(0.0f, 0.0f);
         worldDef.hitEventThreshold = 15f;
         WorldId = b2CreateWorld(worldDef);
         
-        if (!Assets.Dialogues[2].HasBeenPlayed)
-        {
-            Assets.Dialogues[2].PlayIfUnheard(true);
-        }
+        Assets.Dialogues[2].PlayIfUnheard(true);
 
-        _targetScore = Game.Level.TargetScore;
-        if (endlessMode)
-        {
-            _targetScore = int.MaxValue;
-        }
-        
         Start();
     }
 
@@ -81,6 +70,8 @@ public class GameScene : Scene
         
         Assets.Dialogues[48].HasBeenPlayed = false;
         Assets.Dialogues[49].HasBeenPlayed = false;
+        Game.Level.Start(this);
+        Resources.Sounds["game_start"].Play();
     }
     
     public override void Update()
@@ -99,7 +90,7 @@ public class GameScene : Scene
         else
         {
             BackgroundDraw.Web();
-            BackgroundDraw.ChargeMeter((float)_displayedScore / (float)_targetScore);
+            BackgroundDraw.ChargeMeter(Game.Level.GetProgress(this));
         }
         
         // if (Raylib.IsKeyDown(KeyboardKey.A)) Raylib.ClearBackground(new Color(32, 32, 32, 255));
@@ -121,13 +112,14 @@ public class GameScene : Scene
 
         List<Ball> outOfBoundsBalls = new List<Ball>();
         
+        float gravityScale = 100 * (1 + (1 - _drainAnim.Sample()));
         foreach (Ball ball in _balls)
         {
             ball.Draw();
             
             Vector2 delta = new Vector2(36f, 36f) - ball.Position;
             if (delta.Length() > 45f) outOfBoundsBalls.Add(ball);
-            Vector2 g = Vector2.Normalize(delta) * 100;
+            Vector2 g = Vector2.Normalize(delta) * gravityScale;
             b2Body_ApplyForce(ball.Body, g.ToB2(), ball.Position.ToB2(), true);
         }
         
@@ -154,38 +146,18 @@ public class GameScene : Scene
 
         if (_state == State.Gaming)
         {
-            if (Game.Level.SmallTalk != null && (float)_displayedScore / (float)_targetScore > 0.25)
+            float charge = Game.Level.GetProgress(this);
+            if (Game.Level.SmallTalk != null && charge > 0.25)
             {
                 Game.Level.SmallTalk.PlayIfUnheard();
             }
-            if (Game.Level.SmallTalk != null && (float)_displayedScore / (float)_targetScore > 0.50)
+            if (Game.Level.SmallTalk != null && charge > 0.50)
             {
                 Assets.Dialogues[48].PlayIfUnheard();
             }
-            if (Game.Level.SmallTalk != null && (float)_displayedScore / (float)_targetScore > 0.90)
+            if (Game.Level.SmallTalk != null && charge > 0.90)
             {
                 Assets.Dialogues[49].PlayIfUnheard();
-            }
-
-            if (Game.Level.Gimmick == LevelAsset.LevelGimmick.Kill)
-            {
-                Assets.Dialogues[31].PlayIfUnheard(true);
-                if ((float)_displayedScore / (float)_targetScore > 0.20)
-                {
-                    Assets.Dialogues[32].PlayIfUnheard(true);
-                }
-                if ((float)_displayedScore / (float)_targetScore > 0.40)
-                {
-                    Assets.Dialogues[34].PlayIfUnheard(true);
-                }
-                if ((float)_displayedScore / (float)_targetScore > 0.60)
-                {
-                    Assets.Dialogues[36].PlayIfUnheard(true);
-                }
-                if ((float)_displayedScore / (float)_targetScore > 0.80)
-                {
-                    Assets.Dialogues[37].PlayIfUnheard(true);
-                }
             }
             
             HandleInput();
@@ -209,12 +181,10 @@ public class GameScene : Scene
                 Drain();
                 Game.ScrollText("Orb Overflow! Charge vented.");
             }
-
-            if (_displayedScore >= _targetScore)
+            
+            if (Game.Level.IsOver(this))
             {
                 Drain();
-                _targetScore += 10000;
-                _displayedScore = _targetScore;
             }
         }
         
@@ -262,7 +232,9 @@ public class GameScene : Scene
         if (_displayedScore < _score - 3000) _displayedScore += 200;
         if (_displayedScore > _score) _displayedScore -= 500;
         if (_displayedScore < _score) _displayedScore += 10;
-        if (!Game.IsScrolling()) ImGui.DrawTextRadial(0, -280, $"Score: {_displayedScore}");
+        if (!Game.IsScrolling() && _instructionTextRadius.End > -260) _instructionTextRadius = AnimCurve.NewFloat(_instructionTextRadius.Sample(), -280, 0.5f, Easings.OutQuad);
+        if ( Game.IsScrolling() && _instructionTextRadius.End < -260) _instructionTextRadius = AnimCurve.NewFloat(_instructionTextRadius.Sample(), -240, 0.5f, Easings.OutQuad);
+        ImGui.DrawTextRadial(0, _instructionTextRadius.Sample(), Game.Level.GetGoalText(this));
         // ImGui.DrawTextRadial(0, -240, $"Balls: {_balls.Count}");
         if (_combo > 1)
         {
@@ -270,6 +242,8 @@ public class GameScene : Scene
             int comboPercentage = (int)Math.Clamp((Time.Scaled - _lastClear) * 10f, 0, 29);
             ImGui.DrawTextRadial(0, 240, "..............................".Substring(comboPercentage));
         }
+        
+        Game.Level.Update(this);
         
         // if (Raylib.IsKeyDown(KeyboardKey.V))
         //     b2World_Draw(WorldId, _debugDraw);
@@ -310,6 +284,8 @@ public class GameScene : Scene
                     b2World_Explode(WorldId, explode);
                     
                     Resources.Sounds["bomb"].Play();
+
+                    Game.Level.BombExploded(this);
                 }
             }
             else if (mergeBalls.Count < 4) {} // Don't clear normal groups less than 4
@@ -318,8 +294,8 @@ public class GameScene : Scene
                 ballsToMerge.AddRange(mergeBalls);
                 if (makeBomb)
                 {
-                    MakeBall(hoveredBall.Position, Ball.Type.Bomb);
-                    if (!Assets.Dialogues[5].PlayIfUnheard()) Assets.Dialogues[44].Play();
+                    MakeBall(mergeBalls[0].Position, Ball.Type.Bomb);
+                    if (!Assets.Dialogues[5].PlayIfUnheard()) Assets.Dialogues[44].Play(false);
                 }
                 
                 if (hoveredBall.BallType is Ball.Type.BlueCrystal or Ball.Type.YellowCrystal or Ball.Type.PurpleCrystal or Ball.Type.RedCrystal)
@@ -352,11 +328,11 @@ public class GameScene : Scene
             _combo++;
             if (_combo == 3 && !Mixer.IsDialoguePlaying()) Assets.Dialogues[6].PlayIfUnheard();
             if (ballsToMerge.Count > 50) Assets.Dialogues[43].PlayIfUnheard();
-            if (ballsToMerge.Count > 25 && Random.Shared.NextSingle() < 0.25f) Assets.Dialogues[new List<int>(){40, 41, 42}.PickRandom()].Play();
+            if (ballsToMerge.Count > 25 && Random.Shared.NextSingle() < 0.25f) Assets.Dialogues[new List<int>(){40, 41, 42}.PickRandom()].Play(false);
             Resources.Sounds[$"match{Math.Clamp(_combo, 1, 14)}"].Play();
             int mergeScore = ballsToMerge.Count * _combo * 10;
             _score += mergeScore;
-            _scoreAnims.Add(new ScoreAnim($"{ballsToMerge.Count}0x{_combo} = {mergeScore}", Game.GetCursorPosOnDevice(), ballsToMerge));
+            _scoreAnims.Add(new ScoreAnim($"{ballsToMerge.Count}0x{_combo} = {mergeScore}", ballsToMerge[0].Position * 10, ballsToMerge));
         }
         
         foreach (Ball ball in ballsToMerge)
@@ -366,7 +342,7 @@ public class GameScene : Scene
         }
     }
 
-    private void EndCombo()
+    public void EndCombo()
     {
         if (_combo >= 8)
         {
@@ -382,7 +358,7 @@ public class GameScene : Scene
             Vector2 pos = Vector2.Normalize(Utils.InsideUnitCircle(Random.Shared)) * 32f + new Vector2(36, 36);
             MakeBall(pos, new []{Ball.Type.BlueCrystal, Ball.Type.PurpleCrystal, Ball.Type.YellowCrystal, Ball.Type.RedCrystal}[Random.Shared.Next(4)]);
             _combo -= 4;
-            if (Assets.Dialogues[4].PlayIfUnheard() && Random.Shared.NextSingle() < 0.5f) Assets.Dialogues[new List<int>(){47, 45}.PickRandom()].Play();
+            if (Assets.Dialogues[4].PlayIfUnheard() && Random.Shared.NextSingle() < 0.5f) Assets.Dialogues[new List<int>(){47, 45}.PickRandom()].Play(false);
         }
         
         _combo = 0;
@@ -395,6 +371,7 @@ public class GameScene : Scene
         _displayedScore = 0;
         _state = State.Draining;
         _drainAnim = AnimCurve.NewFloat(0, 1, 2, Easings.OutQuad);
+        Resources.Sounds["game_end"].Play();
     }
     
     private Ball? GetBallUnderCursor(float maxDistance)
@@ -421,47 +398,61 @@ public class GameScene : Scene
         if (origin.BallType == Ball.Type.YellowCrystal) return _balls.Where(b => b.BallType is Ball.Type.Yellow or Ball.Type.YellowCrystal).ToList();
         if (origin.BallType == Ball.Type.PurpleCrystal) return _balls.Where(b => b.BallType is Ball.Type.Purple or Ball.Type.PurpleCrystal).ToList();
         if (origin.BallType == Ball.Type.RedCrystal)    return _balls.Where(b => b.BallType is Ball.Type.Red    or Ball.Type.RedCrystal   ).ToList();
+
+        List<Ball> validBalls = _balls.Where(b => b.BallType == origin.BallType).ToList();
         
-        List<Ball> ballsToMerge = new List<Ball>();
-        List<Ball> ballsToCheck = new List<Ball>() {origin};
-        bool first = true;
-        makeBomb = false;
-        
-        while (ballsToCheck.Count > 0)
+        List<Ball> firstSet = GetNeighbors(origin, validBalls);
+        if (firstSet.Count == 6) // If the origin can make a bomb
         {
-            Vector2 pos = b2Body_GetWorldCenterOfMass(ballsToCheck[0].Body).ToVec2();
-            foreach (Ball ball in _balls)
-            {
-                if (ball.BallType == ballsToCheck[0].BallType &&
-                    !ballsToMerge.Contains(ball) &&
-                    Raylib.CheckCollisionCircles(b2Body_GetWorldCenterOfMass(ball.Body).ToVec2(), 1.6f, pos, 1.6f))
-                {
-                    ballsToMerge.Add(ball);
-                    ballsToCheck.Add(ball);
-                }
-            }
-            ballsToCheck.RemoveAt(0);
-            if (first && ballsToMerge.Count >= 7)
-            {
-                makeBomb = true;
-                return ballsToMerge;
-            }
-
-            first = false;
+            firstSet.Insert(0, origin);
+            makeBomb = true;
+            return firstSet;
         }
-
+        foreach (Ball ball in firstSet) // check if any of the origin adjacent balls can make bombs.
+        {
+            List<Ball> neighbors = GetNeighbors(ball, validBalls);
+            if (neighbors.Count == 6)
+            {
+                neighbors.Insert(0, ball);
+                makeBomb = true;
+                return neighbors;
+            }
+        }
+        
+        validBalls.Remove(origin);
+        List<Ball> ballsToMerge = new List<Ball>() {origin};
+        int checkIndex = 0;
+        
+        while (checkIndex < ballsToMerge.Count) // else find the full net of balls to merge
+        {
+            List<Ball> neighbors = GetNeighbors(ballsToMerge[checkIndex], validBalls);
+            ballsToMerge.AddRange(neighbors);
+            validBalls.RemoveAll(b => neighbors.Contains(b));
+            checkIndex++;
+        }
+        
         return ballsToMerge;
+    }
+    
+    private List<Ball> GetNeighbors(Ball centerBall, List<Ball> validBalls)
+    {
+        Vector2 pos = b2Body_GetWorldCenterOfMass(centerBall.Body).ToVec2();
+        return validBalls.Where(b => b != centerBall && Raylib.CheckCollisionCircles(b2Body_GetWorldCenterOfMass(b.Body).ToVec2(), 1.6f, pos, 1.6f)).ToList();
     }
     
     public void Destroy()
     {
         b2DestroyWorld(WorldId);
     }
+    
+    public int GetScore() => _score;
+    public int GetCombo() => _combo;
+    public int SetScore(int score) => _score = score;
 
     private void MakeBall(Vector2 pos, Ball.Type ballType)
     {
         B2BodyDef bodyDef = b2DefaultBodyDef();
-        bodyDef.type  = B2BodyType.b2_dynamicBody;
+        bodyDef.type = B2BodyType.b2_dynamicBody;
         bodyDef.position = new B2Vec2(0, 0);
         bodyDef.linearDamping = 0.05f;
         B2BodyId bodyId = b2CreateBody(WorldId, bodyDef);
@@ -511,7 +502,7 @@ public class GameScene : Scene
         }
         
         public bool IsSpecial() => !(BallType is Type.Blue or Type.Purple or Type.Yellow or Type.Red);
-
+        
         public void Draw()
         {
             Position = b2Body_GetWorldCenterOfMass(Body).ToVec2();

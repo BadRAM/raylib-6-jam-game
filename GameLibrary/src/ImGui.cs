@@ -66,10 +66,11 @@ public static class ImGui
             float width = Raylib.MeasureTextEx(_defaultFont, character, _defaultFontSize, _defaultTextSpacing).X;
             float rotateBy = (180 * (width + _defaultTextSpacing)) / (MathF.PI * radius);
             spin.Rotation -= rotateBy / 2;
-            if (spin.Rotation < maxArc/2 && spin.Rotation > -maxArc/2)
+            float alpha = Math.Clamp((maxArc / 2 - MathF.Abs(spin.Rotation)) * 0.25f, 0f, 1f);
+            if (alpha > 0)
             {
                 Game.SetCamera(spin);
-                Raylib.DrawTextCodepoint(_defaultFont, character[0], new Vector2(-width/2, radius - size.Y/2), _defaultFontSize, color.Value);
+                Raylib.DrawTextCodepoint(_defaultFont, character[0], new Vector2(-width/2, radius - size.Y/2), _defaultFontSize, Raylib.ColorAlpha(color.Value, alpha));
             }
             spin.Rotation -= rotateBy / 2;
         }

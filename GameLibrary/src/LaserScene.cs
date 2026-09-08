@@ -34,7 +34,7 @@ public class LaserScene : Scene
         if (_step == 0)
         {
             Mixer.ClearDialogue();
-            _tunnelingRemark.Play();
+            _tunnelingRemark.Play(true);
             _stepProgress = AnimCurve.NewFloat(0, 1, 1);
             Game.MoveDevice(new Vector2(180, 540), 0.5f,  1);
             _step++;
@@ -54,7 +54,7 @@ public class LaserScene : Scene
         {
             if (_stepProgress.IsComplete())
             {
-                _siteRemark.Play();
+                _siteRemark.Play(true);
                 _stepProgress = AnimCurve.NewFloat(0, 1, 1);
                 _step++;
             }

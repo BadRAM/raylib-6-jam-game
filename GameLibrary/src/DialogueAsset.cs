@@ -16,18 +16,20 @@ public class DialogueAsset
         Sound = Resources.Sounds[$"dialogue{index.ToString().PadLeft(2, '0')}"];
     }
     
-    public void Play()
+    public void Play(bool important)
     {
+        if (!important && (Mixer.IsDialoguePlaying() || Game.Level is KillLevel)) return;
+
         HasBeenPlayed = true;
         Mixer.PlayDialogue(this);
     }
 
     public bool PlayIfUnheard(bool important = false)
     {
-        if (!important && (Mixer.IsDialoguePlaying() || Game.Level.Gimmick == LevelAsset.LevelGimmick.Kill)) return false;
+        if (!important && (Mixer.IsDialoguePlaying() || Game.Level is KillLevel)) return false;
         if (!HasBeenPlayed)
         {
-            Play();
+            Play(important);
             return true;
         }
         return false;

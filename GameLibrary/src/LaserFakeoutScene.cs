@@ -38,7 +38,7 @@ public class LaserFakeoutScene : Scene
         if (_step == 0)
         {
             Mixer.ClearDialogue();
-            _tunnelingRemark.Play();
+            _tunnelingRemark.Play(true);
             _stepProgress = AnimCurve.NewFloat(0, 1, 1);
             Game.MoveDevice(new Vector2(180, 540), 0.5f,  1);
             _step++;
@@ -58,7 +58,7 @@ public class LaserFakeoutScene : Scene
         {
             if (_stepProgress.IsComplete())
             {
-                _siteRemark1.Play();
+                _siteRemark1.Play(true);
                 _stepProgress = AnimCurve.NewFloat(0, 1, 1);
                 _step++;
             }
@@ -87,7 +87,7 @@ public class LaserFakeoutScene : Scene
         {
             if (_stepProgress.IsComplete())
             {
-                _siteRemark2.Play();
+                _siteRemark2.Play(true);
                 _stepProgress = AnimCurve.NewFloat(0, 1, 1);
                 _step++;
             }

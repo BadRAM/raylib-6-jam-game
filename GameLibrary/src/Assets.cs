@@ -7,8 +7,7 @@ public static class Assets
 {
     public static Dictionary<string, MusicAsset> Musics = new Dictionary<string, MusicAsset>();
     public static Dictionary<int, DialogueAsset> Dialogues = new Dictionary<int, DialogueAsset>();
-    public static List<LevelAsset> Levels;
-    
+    public static List<Level> Levels;
     
     public static void Load()
     {
@@ -92,15 +91,15 @@ public static class Assets
             Dialogues.Add(dialogue.Index, dialogue);
         }
         
-        Levels = new List<LevelAsset>()
+        Levels = new List<Level>()
         {
-            new LevelAsset(20000, null, () => { Game.ActiveScene = new LaserScene(Dialogues[7],  Dialogues[8],  Resources.Sprites["site1"]); }),
-            new LevelAsset(25000, Dialogues[9],  () => { Game.ActiveScene = new LaserScene(Dialogues[10], Dialogues[11], Resources.Sprites["site2"]); }),
-            new LevelAsset(30000, Dialogues[12], () => { Game.ActiveScene = new LaserScene(Dialogues[13], Dialogues[63], Resources.Sprites["site3"]); }),
-            new LevelAsset(35000, Dialogues[15], () => { Game.ActiveScene = new LaserFakeoutScene(Dialogues[16], Dialogues[17], Dialogues[18], Resources.Sprites["site5"], Resources.Sprites["site4"]); }),
-            new LevelAsset(40000, Dialogues[19], () => { Game.ActiveScene = new LaserScene(Dialogues[20], Dialogues[21], Resources.Sprites["site6"]); }),
-            // new LevelAsset(20000, Dialogues[23], () => { Game.ActiveScene = new LaserScene(Dialogues[24], Dialogues[30], Resources.Sprites["site1"]); }, LevelAsset.LevelGimmick.KeepCharging),
-            new LevelAsset(60000, Dialogues[23], () => { Game.ActiveScene = new EndingScene(); }, LevelAsset.LevelGimmick.Kill),
+            new ComboLevel("Internet 0% curated.", 12, null, () => { Game.ActiveScene = new LaserScene(Dialogues[7],  Dialogues[8],  Resources.Sprites["site1"]); }),
+            new ScoreLevel("Internet 20% curated.", 25000, Dialogues[9],  () => { Game.ActiveScene = new LaserScene(Dialogues[10], Dialogues[11], Resources.Sprites["site2"]); }),
+            new MakeBombLevel("Internet 40% curated.", 3, Dialogues[12], () => { Game.ActiveScene = new LaserScene(Dialogues[13], Dialogues[63], Resources.Sprites["site3"]); }),
+            new ComboScoreLevel("Internet 60% curated.", 16000, Dialogues[15], () => { Game.ActiveScene = new LaserFakeoutScene(Dialogues[16], Dialogues[17], Dialogues[18], Resources.Sprites["site5"], Resources.Sprites["site4"]); }),
+            new ScoreLevel("Internet 80% curated.", 100000, Dialogues[19], () => { Game.ActiveScene = new LaserScene(Dialogues[20], Dialogues[21], Resources.Sprites["site6"]); }),
+            new KillLevel("Internet 100% curated?", 22000, 4, Dialogues[23], () => { Game.ActiveScene = new EndingScene(); }),
+            new EndlessLevel()
         };
         
         Console.WriteLine("All Assets loaded OK!");

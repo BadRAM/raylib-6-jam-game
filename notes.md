@@ -1,11 +1,7 @@
 Raylib Jam
 
-a9b3ea
 
 Stack:
- - Update page text
- - Implement the promised endless mode
- - Menu to minigame transition
  - Cleanup, sensible scene system and device/scene distinction. (Gamescene vs Devicescene?)
  - Implement charge sound
  - alert sirens

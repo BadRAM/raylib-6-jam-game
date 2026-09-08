@@ -32,7 +32,7 @@ public class EndingScene : Scene
         {
             Mixer.Pause();
             Mixer.ClearDialogue();
-            Assets.Dialogues[38].Play();
+            Assets.Dialogues[38].Play(true);
             _stepProgress = AnimCurve.NewFloat(0, 1, 1);
             _step++;
         }

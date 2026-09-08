@@ -117,7 +117,8 @@ public class IntroScene : Scene
             {
                 if (_aPressed && _dPressed && _cPressed)
                 {
-                    Game.ActiveScene = new GameScene(true);
+                    Game.LevelIndex = 6;
+                    Game.ActiveScene = new GameScene();
                 }
                 else
                 {

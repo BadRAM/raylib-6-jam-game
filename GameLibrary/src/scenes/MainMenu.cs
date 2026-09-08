@@ -31,7 +31,8 @@ public class MainMenu : Scene
         // if (Raylib.IsKeyPressed(KeyboardKey.Four )) Game.MoveDevice(new Vector2(180, 540), 0.5f,  1);
         // if (Raylib.IsKeyPressed(KeyboardKey.Five )) Game.MoveDevice(new Vector2(240, 480), 0.66f,  1);
         // if (Raylib.IsKeyPressed(KeyboardKey.G    )) Game.ActiveScene = new GameScene();
-        // if (Raylib.IsKeyPressed(KeyboardKey.H    )) Game.Level.TargetReachedAction.Invoke();
+        if (Raylib.IsKeyPressed(KeyboardKey.H    )) Game.Level.TargetReachedAction.Invoke();
+        if (Raylib.IsKeyPressed(KeyboardKey.N    )) Game.LevelIndex++;
         // if (Raylib.IsKeyPressed(KeyboardKey.K    )) Game.OpenPortal();
         // if (Raylib.IsKeyPressed(KeyboardKey.L    )) Game.ClosePortal();
 
@@ -63,6 +64,8 @@ public class MainMenu : Scene
 
         DrawRadialMenu();
 
+        ImGui.DrawTextRadial(0, 280, Game.Level.Message);
+
         if (_loadAnim.Sample() < 1) Raylib.DrawCircle(360, 360, 350, Raylib.ColorAlpha(Game.ScreenBlack, 1 - _loadAnim.Sample()));
         
         Raylib.UpdateMusicStream(_menuMusic);
@@ -91,6 +94,7 @@ public class MainMenu : Scene
                 RotateTo(rot);
                 if (rot == 0)
                 {
+                    Resources.Sounds["menu_click"].Play();
                     if (Mixer.MusicPlaying != null)
                     {
                         if (Mixer.IsPaused)
@@ -124,6 +128,7 @@ public class MainMenu : Scene
                 RotateTo(rot);
                 if (rot == 0)
                 {
+                    Resources.Sounds["menu_click"].Play();
                     Mixer.PlayNextMusic();
                 }
             }
@@ -143,6 +148,7 @@ public class MainMenu : Scene
                 RotateTo(rot);
                 if (rot == 0)
                 {
+                    Resources.Sounds["menu_click"].Play();
                     Game.ActiveScene = new GameScene();
                 }
             }
@@ -162,6 +168,7 @@ public class MainMenu : Scene
                 RotateTo(rot);
                 if (rot == 0)
                 {
+                    Resources.Sounds["menu_click"].Play();
                     Assets.Dialogues[51].PlayIfUnheard();
                 }
             }
@@ -175,14 +182,17 @@ public class MainMenu : Scene
         if (option < 0) option += 4;
         if (option == 1)
         {
+            Resources.Sounds["menu_left"].Play();
             _menuMoveAnim = AnimCurve.NewFloat(_menuMoveAnim.Sample(), _menuMoveAnim.Sample() - 90, 0.5f, Easings.InOutSine);
         }
         else if (option == 2)
         {
+            Resources.Sounds["menu_right"].Play();
             _menuMoveAnim = AnimCurve.NewFloat(_menuMoveAnim.Sample(), _menuMoveAnim.Sample() + 180, 0.5f, Easings.InOutSine);
         }
         else if (option == 3)
         {
+            Resources.Sounds["menu_left"].Play();
             _menuMoveAnim = AnimCurve.NewFloat(_menuMoveAnim.Sample(), _menuMoveAnim.Sample() + 90, 0.5f, Easings.InOutSine);
         }
     }

@@ -10,7 +10,7 @@ public static class Game
     public static string Dir = "";
     public static Queue<Action> LateActions = new Queue<Action>(); // LateActions are dequeued and invoked after everything else has updated.
     public static Scene ActiveScene;
-    public static LevelAsset Level => Assets.Levels[LevelIndex];
+    public static Level Level => Assets.Levels[LevelIndex];
     public static int LevelIndex;
     public static MouseCursor MouseCursor;
     public static bool DebugMode;
