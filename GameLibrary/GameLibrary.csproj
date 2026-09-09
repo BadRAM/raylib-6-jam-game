@@ -22,10 +22,4 @@
             <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
         </None>
     </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="resource\music\" />
-      <Folder Include="resource\sound\" />
-      <Folder Include="resource\sprite\" />
-    </ItemGroup>
 </Project>

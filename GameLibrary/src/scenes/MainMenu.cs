@@ -148,7 +148,6 @@ public class MainMenu : Scene
                 RotateTo(rot);
                 if (rot == 0)
                 {
-                    Resources.Sounds["menu_click"].Play();
                     Game.ActiveScene = new GameScene();
                 }
             }

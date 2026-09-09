@@ -54,7 +54,6 @@ public static class Game
         _portalEdgeRenderTarget = Raylib.LoadRenderTexture(720, 720);
         
         Resources.Load();
-        Assets.Load();
         _screenShader = Resources.Shaders["screen_fragment"];
         _screenShaderMaskLocation = Raylib.GetShaderLocation(_screenShader, "mask");
 
@@ -75,6 +74,7 @@ public static class Game
     public static void Update()
     {
         Time.UpdateTime();
+        Resources.LateLoad();
         
         // if (Raylib.IsKeyPressed(KeyboardKey.F3)) DebugMode = !DebugMode;
         
@@ -189,7 +189,7 @@ public static class Game
 
     public static void MoveDevice(Vector2 center, float zoom, float duration, Func<float, float>? easing = null)
     {
-        if (duration < 4)
+        if (duration < 4 && Resources.Sounds.ContainsKey("whoosh"))
         {
             Resources.Sounds["whoosh"].Play();
         }
